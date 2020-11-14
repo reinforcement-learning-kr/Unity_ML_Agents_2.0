@@ -40,13 +40,12 @@ VISUAL_OBS = 0
 VECTOR_OBS = 1
 OBS = VISUAL_OBS
 
-date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-
 # 유니티 환경 경로 
 game = "GridWorld"
 env_name = f"../envs/{game}/{game}"
 
 # 모델 저장 및 불러오기 경로
+date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/DQN/{date_time}"
 load_path = f"./saved_models/{game}/DQN/20201113003549"
 

@@ -33,13 +33,12 @@ train_start_step = 5000
 print_interval = 10
 save_interval = 100
 
-date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-
 # 유니티 환경 경로 
 game = "Drone"
 env_name = f"../envs/{game}/{game}"
 
 # 모델 저장 및 불러오기 경로
+date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/DDPG/{date_time}"
 load_path = f"./saved_models/{game}/DDPG/20201008205356"
 
