@@ -25,12 +25,14 @@ test_step = 10000
 train_start_step = 5000
 target_update_step = 500
 
-print_interval = 100
-save_interval = 1000
+print_interval = 10
+save_interval = 100
 
+epsilon_eval = 0.05
+epsilon_init = 1.0 if train_mode else epsilon_eval
 epsilon_min = 0.1
-epsilon_init = 1.0 if train_mode else epsilon_min
 explore_step = run_step * 0.9
+eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 
 # 소코반 환경 설정 (게임판 크기=5, 초록색 +의 수=1, 박스의 수=1)
 env_config = {"gridSize": 5, "numGoals": 1, "numBoxes": 1}
@@ -46,7 +48,7 @@ env_name = f"../envs/{game}/{game}"
 
 # 모델 저장 및 불러오기 경로
 save_path = f"./saved_models/{game}/DQN/{date_time}"
-load_path = f"./saved_models/{game}/DQN/20201018220037"
+load_path = f"./saved_models/{game}/DQN/20201113003549"
 
 # DQN 클래스 -> Deep Q Network 정의 
 class DQN(tf.keras.Model):
@@ -91,8 +93,9 @@ class DQNAgent:
         if self.epsilon > random.random():  
             action = np.random.randint(1, action_size, size=(1,1))
         # 네트워크 연산에 따라 행동 결정
-        else:                               
-            action = tf.argmax(self.network(state, training=training), axis=-1)[..., tf.newaxis].numpy()
+        else:
+            q = self.network(state, training=training)                     
+            action = tf.argmax(q, axis=-1)[..., tf.newaxis].numpy()
         return action
 
     # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
@@ -129,14 +132,15 @@ class DQNAgent:
 
     # 네트워크 모델 저장 
     def save_model(self):
+        print("... Save Model ...")
         self.network.save_weights(save_path+'/model')
 
     # 학습 기록 
-    def write_summray(self, reward, loss, epsilon, step):
+    def write_summray(self, score, loss, epsilon, step):
         with self.writer.as_default():
+            tf.summary.scalar("run/score", score, step=step)
             tf.summary.scalar("model/loss", loss, step=step)
-            tf.summary.scalar("run/reward", reward, step=step)
-            tf.summary.scalar("run/epsilon", epsilon, step=step)
+            tf.summary.scalar("model/epsilon", epsilon, step=step)
 
 # Main 함수 -> 전체적으로 DQN 알고리즘을 진행 
 if __name__ == '__main__':
@@ -156,9 +160,12 @@ if __name__ == '__main__':
     # DQNAgent 클래스를 agent로 정의 
     agent = DQNAgent()
     
-    losses, rewards, episode, score = [], [], 0, 0
+    losses, scores, episode, score = [], [], 0, 0
     for step in range(run_step + test_step):
-        if  step == run_step:
+        if step == run_step:
+            if train_mode:
+                agent.save_model()
+                agent.epsilon = epsilon_eval
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
@@ -175,11 +182,10 @@ if __name__ == '__main__':
         next_state = term.obs[OBS] if done else dec.obs[OBS]
         score += reward
 
-        if len(state) > 0:
+        if train_mode and len(state) > 0:
             agent.append_sample(state[0], action[0], [reward], next_state[0], [done])
-            rewards.append(reward)
 
-        if step > max(batch_size, train_start_step) and train_mode:
+        if train_mode and step > max(batch_size, train_start_step) :
             # 학습 수행 
             loss = agent.train_model()
             losses.append(loss)
@@ -188,22 +194,25 @@ if __name__ == '__main__':
             if step % target_update_step == 0:
                 agent.update_target()
             if agent.epsilon > epsilon_min:
-                agent.epsilon = max(epsilon_min, agent.epsilon - (epsilon_init - epsilon_min)/(explore_step-train_start_step))
+                agent.epsilon -= eplsilon_delta
 
-        if step % print_interval == 0:
-            mean_reward = tf.reduce_mean(rewards)
-            mean_loss = tf.reduce_mean(losses)
-            agent.write_summray(mean_reward, mean_loss, agent.epsilon, step)
-            losses, rewards = [], []
-
-        # 네트워크 모델 저장 
-        if step % save_interval == 0:
-            agent.save_model()
-
-        # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
         if done:
-            print(f"{episode+1} Episode / Step : {step} / Score : {score:.2f} / Epsilon : {agent.epsilon:.4f}")
             episode +=1
+            scores.append(score)
             score = 0
+
+            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
+            if episode % print_interval == 0:
+                mean_score = tf.reduce_mean(scores)
+                mean_loss = tf.reduce_mean(losses)
+                agent.write_summray(mean_score, mean_loss, agent.epsilon, step)
+                losses, scores = [], []
+
+                print(f"{episode} Episode / Step: {step} / Loss: {mean_loss:.4f} / " +\
+                      f"Score: {mean_score:.2f} / Epsilon: {agent.epsilon:.4f}")
+
+            # 네트워크 모델 저장 
+            if train_mode and episode % save_interval == 0:
+                agent.save_model()
 
     env.close()

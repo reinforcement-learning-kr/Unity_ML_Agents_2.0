@@ -4,7 +4,8 @@ import random
 from collections import deque
 import datetime
 from mlagents_envs.environment import UnityEnvironment
-from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
+from mlagents_envs.side_channel.engine_configuration_channel\
+                             import EngineConfigurationChannel
 
 # DDPG를 위한 파라미터 값 세팅
 state_size = 9
@@ -29,8 +30,8 @@ run_step = 50000 if train_mode else 0
 test_step = 10000
 train_start_step = 5000
 
-print_interval = 1000
-save_interval = 10000
+print_interval = 10
+save_interval = 100
 
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 
@@ -162,15 +163,16 @@ class DDPGAgent:
         
     # 네트워크 모델 저장 
     def save_model(self):
+        print("... Save Model ...")
         self.actor.save_weights(save_path+'/actor')
         self.critic.save_weights(save_path+'/critic')
 
     # 학습 기록 
-    def write_summray(self, reward, actor_loss, critic_loss, step):
+    def write_summray(self, score, actor_loss, critic_loss, step):
         with self.writer.as_default():
+            tf.summary.scalar("run/score", score, step=step)
             tf.summary.scalar("model/actor_loss", actor_loss, step=step)
             tf.summary.scalar("model/critic_loss", critic_loss, step=step)
-            tf.summary.scalar("run/reward", reward, step=step)
 
 # Main 함수 -> 전체적으로 DDPG 알고리즘을 진행 
 if __name__ == "__main__":
@@ -190,9 +192,11 @@ if __name__ == "__main__":
     # DDPGAgent 클래스를 agent로 정의 
     agent = DDPGAgent()
 
-    actor_losses, critic_losses, rewards, episode, score = [], [], [], 0, 0
+    actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
     for step in range(run_step + test_step):
         if step == run_step:
+            if train_mode:
+                agent.save_model()
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
@@ -208,30 +212,33 @@ if __name__ == "__main__":
         next_state = term.obs[0] if done else dec.obs[0]
         score += reward
 
-        if len(state) > 0:
-            agent.append_sample(state[0], action[0], reward, next_state[0], done)
-            rewards.append(reward)
+        if train_mode and len(state) > 0:
+            agent.append_sample(state[0], action[0], [reward], next_state[0], [done])
 
-        if step > max(batch_size, train_start_step) and train_mode:
+        if train_mode and step > max(batch_size, train_start_step) :
             # 학습 수행 
             actor_loss, critic_loss = agent.train_model()
             actor_losses.append(actor_loss)
             critic_losses.append(critic_loss)
 
-        if step % print_interval == 0:
-            mean_actor_loss = tf.reduce_mean(actor_losses)
-            mean_critic_loss = tf.reduce_mean(critic_losses)
-            agent.write_summray(tf.reduce_sum(rewards), mean_actor_loss, mean_critic_loss, step)
-            losses, rewards = [], []
-
-        # 네트워크 모델 저장 
-        if step % save_interval == 0 :
-            agent.save_model()
-
-        # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
         if done:
-            print(f"{episode+1} Episode / Step : {step} / Score : {score:.2f}")
             episode +=1
+            scores.append(score)
             score = 0
+
+            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
+            if episode % print_interval == 0:
+                mean_score = tf.reduce_mean(scores)
+                mean_actor_loss = tf.reduce_mean(actor_losses)
+                mean_critic_loss = tf.reduce_mean(critic_losses)
+                agent.write_summray(mean_score, mean_actor_loss, mean_critic_loss, step)
+                actor_losses, critic_losses, scores = [], [], []
+
+                print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +\
+                      f"Actor loss: {mean_actor_loss:.2f} / Critic loss: {mean_critic_loss:.4f}")
+
+            # 네트워크 모델 저장 
+            if train_mode and episode % save_interval == 0:
+                agent.save_model()
 
     env.close()

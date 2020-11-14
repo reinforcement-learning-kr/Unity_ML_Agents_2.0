@@ -3,7 +3,8 @@ import numpy as np
 import datetime
 import tensorflow as tf
 from mlagents_envs.environment import UnityEnvironment
-from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
+from mlagents_envs.side_channel.engine_configuration_channel\
+                             import EngineConfigurationChannel
 
 # DQN을 위한 파라미터 값 세팅 
 state_size = 6
@@ -13,13 +14,13 @@ load_model = False
 train_mode = True
 
 discount_factor = 0.99
-learning_rate = 5e-5
+learning_rate = 5e-4
 
-run_step = 100000 if train_mode else 0
-test_step = 5000
+run_step = 50000 if train_mode else 0
+test_step = 10000
 
-print_interval = 1000
-save_interval = 10000
+print_interval = 10
+save_interval = 100
 
 # 소코반 환경 설정 (게임판 크기=5, 초록색 +의 수=1, 박스의 수=1)
 env_config = {"gridSize": 5, "numGoals": 1, "numBoxes": 1}
@@ -35,7 +36,7 @@ env_name = f"../envs/{game}/{game}"
 
 # 모델 저장 및 불러오기 경로
 save_path = f"./saved_models/{game}/A2C/{date_time}"
-load_path = f"./saved_models/{game}/A2C/20201019001624"
+load_path = f"./saved_models/{game}/A2C/20201114230509"
 
 # A2C 클래스 -> Actor, Critic 정의 
 class A2C(tf.keras.Model):
@@ -64,11 +65,8 @@ class A2CAgent:
 
     def get_action(self, state, training=True):
         # 네트워크 연산에 따라 행동 결정
-        pi, _ = self.a2c(state)
-        if training:
-            action = np.random.choice(action_size, p=pi.numpy()[0], size=(1,1))
-        else:
-            action = tf.argmax(pi, axis=-1)[..., tf.newaxis].numpy()
+        pi, _ = self.a2c(state, training=training)
+        action = np.random.choice(action_size, p=pi.numpy()[0], size=(1,1))
         return action
 
     # 학습 수행
@@ -98,14 +96,15 @@ class A2CAgent:
 
     # 네트워크 모델 저장 
     def save_model(self):
+        print("... Save Model ...")
         self.a2c.save_weights(save_path+'/a2c')
 
     # 학습 기록 
-    def write_summray(self, reward, actor_loss, critic_loss, step):
+    def write_summray(self, score, actor_loss, critic_loss, step):
         with self.writer.as_default():
+            tf.summary.scalar("run/score", score, step=step)
             tf.summary.scalar("model/actor_loss", actor_loss, step=step)
             tf.summary.scalar("model/critic_loss", critic_loss, step=step)
-            tf.summary.scalar("run/reward", reward, step=step)
 
 # Main 함수 -> 전체적으로 A2C 알고리즘을 진행 
 if __name__ == '__main__':
@@ -124,9 +123,11 @@ if __name__ == '__main__':
     # A2CAgent 클래스를 agent로 정의 
     agent = A2CAgent()
     
-    actor_losses, critic_losses, rewards, episode, score = [], [], [], 0, 0
+    actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
     for step in range(run_step + test_step):
         if  step == run_step:
+            if train_mode:
+                agent.save_model()
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
@@ -143,30 +144,29 @@ if __name__ == '__main__':
         next_state = term.obs[OBS] if done else dec.obs[OBS]
         score += reward
 
-        if len(state) > 0:
-            rewards.append(reward)
+        if train_mode and len(state) > 0:
+            # 학습 수행 
+            actor_loss, critic_loss = agent.train_model(state, action[0], [reward], next_state, [done])
+            actor_losses.append(actor_loss)
+            critic_losses.append(critic_loss)
 
-            if train_mode:
-                # 학습 수행 
-                actor_loss, critic_loss = agent.train_model(state, action[0], [reward], next_state, [done])
-                actor_losses.append(actor_loss)
-                critic_losses.append(critic_loss)
-
-        if step % print_interval == 0:
-            mean_reward = tf.reduce_mean(rewards)
-            mean_actor_loss = tf.reduce_mean(actor_losses)
-            mean_critic_loss = tf.reduce_mean(critic_losses)
-            agent.write_summray(mean_reward, mean_actor_loss, mean_critic_loss, step)
-            actor_losses, critic_losses, rewards = [], [], []
-
-        # 네트워크 모델 저장 
-        if step % save_interval == 0:
-            agent.save_model()
-
-        # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
         if done:
-            print(f"{episode+1} Episode / Step : {step} / Score : {score:.2f}")
             episode +=1
+            scores.append(score)
             score = 0
 
+            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
+            if episode % print_interval == 0:
+                mean_score = tf.reduce_mean(scores)
+                mean_actor_loss = tf.reduce_mean(actor_losses)
+                mean_critic_loss = tf.reduce_mean(critic_losses)
+                agent.write_summray(mean_score, mean_actor_loss, mean_critic_loss, step)
+                actor_losses, critic_losses, scores = [], [], []
+
+                print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +\
+                      f"Actor loss: {mean_actor_loss:.2f} / Critic loss: {mean_critic_loss:.4f}")
+
+            # 네트워크 모델 저장 
+            if train_mode and episode % save_interval == 0:
+                agent.save_model()
     env.close()
