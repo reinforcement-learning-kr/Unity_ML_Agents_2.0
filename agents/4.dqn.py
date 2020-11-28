@@ -9,7 +9,7 @@ from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 
 # DQN을 위한 파라미터 값 세팅 
-state_size = [84, 84, 3]
+state_size = [64, 84, 3]
 action_size = 4 
 
 load_model = False
@@ -20,7 +20,7 @@ mem_maxlen = 50000
 discount_factor = 0.99
 learning_rate = 3e-4
 
-run_step = 100000 if train_mode else 0
+run_step = 150000 if train_mode else 0
 test_step = 10000
 train_start_step = 5000
 target_update_step = 500
@@ -31,7 +31,7 @@ save_interval = 100
 epsilon_eval = 0.05
 epsilon_init = 1.0 if train_mode else epsilon_eval
 epsilon_min = 0.1
-explore_step = run_step * 0.9
+explore_step = run_step * 0.8
 eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 
 # 소코반 환경 설정 (게임판 크기=5, 초록색 +의 수=1, 박스의 수=1)
@@ -104,11 +104,11 @@ class DQNAgent:
     # 학습 수행
     def train_model(self):
         batch = random.sample(self.memory, batch_size)
-        state      = [b[0] for b in batch]
-        action     = tf.convert_to_tensor([b[1] for b in batch])
-        reward     = tf.convert_to_tensor([b[2] for b in batch])
-        next_state = [b[3] for b in batch]
-        done       = tf.convert_to_tensor([b[4] for b in batch], tf.float32)
+        state      = np.stack([b[0] for b in batch], axis=0)
+        action     = np.stack([b[1] for b in batch], axis=0)
+        reward     = np.stack([b[2] for b in batch], axis=0)
+        next_state = np.stack([b[3] for b in batch], axis=0)
+        done       = np.stack([b[4] for b in batch], axis=0).astype(np.float32)
         return self.train_step(state, action, reward, next_state, done)
 
     @tf.function
@@ -170,6 +170,8 @@ if __name__ == '__main__':
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
 
         state = dec.obs[OBS]
+        print(state.shape)
+        import sys; sys.exit()
         action = agent.get_action(state, train_mode)
         real_action = action + 1
         env.set_actions(group_name, real_action)
@@ -185,7 +187,7 @@ if __name__ == '__main__':
             agent.append_sample(state[0], action[0], [reward], next_state[0], [done])
 
         if train_mode and step > max(batch_size, train_start_step) :
-            # 학습 수행 
+            # 학습 수행
             loss = agent.train_model()
             losses.append(loss)
 
@@ -207,8 +209,8 @@ if __name__ == '__main__':
                 agent.write_summray(mean_score, mean_loss, agent.epsilon, step)
                 losses, scores = [], []
 
-                print(f"{episode} Episode / Step: {step} / Loss: {mean_loss:.4f} / " +\
-                      f"Score: {mean_score:.2f} / Epsilon: {agent.epsilon:.4f}")
+                print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +\
+                      f"Loss: {mean_loss:.4f} / Epsilon: {agent.epsilon:.4f}")
 
             # 네트워크 모델 저장 
             if train_mode and episode % save_interval == 0:

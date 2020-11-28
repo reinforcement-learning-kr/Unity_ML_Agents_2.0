@@ -115,11 +115,11 @@ class DDPGAgent:
     # 학습 수행
     def train_model(self):
         batch = random.sample(self.memory, batch_size)
-        state      = [b[0] for b in batch]
-        action     = tf.convert_to_tensor([b[1] for b in batch])
-        reward     = tf.convert_to_tensor([b[2] for b in batch])
-        next_state = [b[3] for b in batch]
-        done       = tf.convert_to_tensor([b[4] for b in batch], tf.float32)
+        state      = np.stack([b[0] for b in batch], axis=0)
+        action     = np.stack([b[1] for b in batch], axis=0)
+        reward     = np.stack([b[2] for b in batch], axis=0)
+        next_state = np.stack([b[3] for b in batch], axis=0)
+        done       = np.stack([b[4] for b in batch], axis=0).astype(np.float32)
         actor_loss, critic_loss = self.train_step(state, action, reward, next_state, done)
         
         # 타겟 네트워크 업데이트 
