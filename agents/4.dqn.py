@@ -34,7 +34,7 @@ epsilon_min = 0.1
 explore_step = run_step * 0.8
 eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 
-# 소코반 환경 설정 (게임판 크기=5, 초록색 +의 수=1, 박스의 수=1)
+# 그리드월드 환경 설정 (게임판 크기=5, 초록색 +의 수=1, 박스의 수=1)
 env_config = {"gridSize": 5, "numGoals": 1, "numBoxes": 1}
 VISUAL_OBS = 0
 VECTOR_OBS = 1
