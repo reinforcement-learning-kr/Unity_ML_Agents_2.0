@@ -15,12 +15,12 @@ action_size = 4
 load_model = False
 train_mode = True
 
-batch_size = 128
+batch_size = 32
 mem_maxlen = 50000
 discount_factor = 0.99
 learning_rate = 3e-4
 
-run_step = 150000 if train_mode else 0
+run_step = 300000 if train_mode else 0
 test_step = 10000
 train_start_step = 5000
 target_update_step = 500
@@ -34,8 +34,8 @@ epsilon_min = 0.1
 explore_step = run_step * 0.8
 eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 
-# 그리드월드 환경 설정 (게임판 크기=5, 초록색 +의 수=1, 박스의 수=1)
-env_config = {"gridSize": 5, "numGoals": 1, "numBoxes": 1}
+# 그리드월드 환경 설정 (게임판 크기=5, 목적지 수=1, 장애물 수=1)
+env_config = {"gridSize": 5, "numGoals": 1, "numObstacles": 1}
 VISUAL_OBS = 0
 VECTOR_OBS = 1
 OBS = VISUAL_OBS
@@ -170,8 +170,6 @@ if __name__ == '__main__':
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
 
         state = dec.obs[OBS]
-        print(state.shape)
-        import sys; sys.exit()
         action = agent.get_action(state, train_mode)
         real_action = action + 1
         env.set_actions(group_name, real_action)
