@@ -3,6 +3,6 @@
 ## Usage
 ```cmd
 pip install -r requirements.txt
-cd agents_-_FRAMEWORK
+cd agents_FRAMEWORK
 python AGENT.py
 ```
