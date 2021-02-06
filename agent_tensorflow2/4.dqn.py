@@ -2,6 +2,7 @@
 import numpy as np
 import random
 import datetime
+import platform
 import tensorflow as tf
 from collections import deque
 from mlagents_envs.environment import UnityEnvironment
@@ -42,7 +43,7 @@ OBS = VISUAL_OBS
 
 # 유니티 환경 경로 
 game = "GridWorld"
-env_name = f"../envs/{game}/{game}"
+env_name = f"../envs/{game}_{platform.system()}/{game}"
 
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")

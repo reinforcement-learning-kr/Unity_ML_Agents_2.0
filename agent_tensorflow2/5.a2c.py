@@ -1,6 +1,7 @@
 # 라이브러리 불러오기
 import numpy as np
 import datetime
+import platform
 import tensorflow as tf
 from mlagents_envs.environment import UnityEnvironment
 from mlagents_envs.side_channel.engine_configuration_channel\
@@ -30,7 +31,7 @@ OBS = VECTOR_OBS
 
 # 유니티 환경 경로 
 game = "GridWorld"
-env_name = f"../envs/{game}/{game}"
+env_name = f"../envs/{game}_{platform.system()}/{game}"
 
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
