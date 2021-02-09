@@ -96,7 +96,7 @@ class DQNAgent:
             self.target_network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
         
-    # Epsilon greedy 기법에 따라 행동 결정
+    # Epsilon greedy 기법에 따라 행동 결정 
     def get_action(self, state, training=True):
         #  네트워크 모드 설정
         self.network.train(training)
@@ -130,7 +130,7 @@ class DQNAgent:
         one_hot_action = eye[action.view(-1).long()]
         q = (self.network(state) * one_hot_action).sum(1, keepdims=True)
 
-        with torch. no_grad():
+        with torch.no_grad():
             next_q = self.target_network(next_state)
             target_q = reward + next_q.max(1, keepdims=True).values * ((1 - done) * discount_factor)
 
