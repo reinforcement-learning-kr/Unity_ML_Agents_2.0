@@ -31,7 +31,11 @@ OBS = VECTOR_OBS
 
 # 유니티 환경 경로 
 game = "GridWorld"
-env_name = f"../envs/{game}_{platform.system()}/{game}"
+os_name = platform.system()
+if os_name == 'Windows':
+    env_name = f"../envs/{game}_{os_name}/{game}"
+elif os_name == 'Darwin':
+    env_name = f"../envs/{game}_{os_name}"
 
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")

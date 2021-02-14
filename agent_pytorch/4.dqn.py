@@ -46,7 +46,11 @@ OBS = VISUAL_OBS
 
 # 유니티 환경 경로 
 game = "GridWorld"
-env_name = f"../envs/{game}_{platform.system()}/{game}"
+os_name = platform.system()
+if os_name == 'Windows':
+    env_name = f"../envs/{game}_{os_name}/{game}"
+elif os_name == 'Darwin':
+    env_name = f"../envs/{game}_{os_name}"
 
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
@@ -54,7 +58,7 @@ save_path = f"./saved_models/{game}/DQN/{date_time}"
 load_path = f"./saved_models/{game}/DQN/20210206005012"
 
 # 연산 장치
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # DQN 클래스 -> Deep Q Network 정의 
 class DQN(torch.nn.Module):
