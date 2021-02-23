@@ -4,10 +4,9 @@ import datetime
 import platform
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
-from mlagents_envs.environment import UnityEnvironment
+from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 #파라미터 값 세팅 
@@ -151,7 +150,9 @@ if __name__ == '__main__':
         state = dec.obs[OBS]
         action = agent.get_action(state, train_mode)
         real_action = action + 1
-        env.set_actions(group_name, real_action)
+        action_tuple = ActionTuple()
+        action_tuple.add_discrete(real_action)
+        env.set_actions(group_name, action_tuple)
         env.step()
 
         #환경으로부터 얻는 정보
