@@ -8,7 +8,7 @@ import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from collections import deque
-from mlagents_envs.environment import UnityEnvironment
+from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 
@@ -202,7 +202,9 @@ if __name__ == '__main__':
         state = dec.obs[OBS]
         action = agent.get_action(state, train_mode)
         real_action = action + 1
-        env.set_actions(group_name, real_action)
+        action_tuple = ActionTuple()
+        action_tuple.add_discrete(real_action)
+        env.set_actions(group_name, action_tuple)
         env.step()
 
         dec, term = env.get_steps(group_name)
