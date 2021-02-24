@@ -133,10 +133,6 @@ if __name__ == '__main__':
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
     dec, term = env.get_steps(group_name)
 
-    #action size, state_size 환경에서 불러오기
-    state_size = group_spec.observation_shapes[OBS][0]
-    action_size = group_spec.action_spec.discrete_branches[0]-1
-    
     # A2C 클래스를 agent로 정의 
     agent = A2CAgent()
     actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
