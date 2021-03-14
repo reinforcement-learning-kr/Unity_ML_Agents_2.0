@@ -20,12 +20,12 @@ load_model = False
 train_mode = True
 
 batch_size = 32
-mem_maxlen = 50000
-discount_factor = 0.99
+mem_maxlen = 10000
+discount_factor = 0.9
 learning_rate = 0.00025
 
-run_step = 200000 if train_mode else 0
-test_step = 10000
+run_step = 30000 if train_mode else 0
+test_step = 5000
 train_start_step = 5000
 target_update_step = 500
 
@@ -35,7 +35,7 @@ save_interval = 100
 epsilon_eval = 0.05
 epsilon_init = 1.0 if train_mode else epsilon_eval
 epsilon_min = 0.1
-explore_step = run_step * 0.8
+explore_step = run_step * 0.1
 eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 
 # 그리드월드 환경 설정 (게임판 크기=5, 목적지 수=1, 장애물 수=1)
@@ -104,6 +104,7 @@ class DQNAgent:
     def get_action(self, state, training=True):
         #  네트워크 모드 설정
         self.network.train(training)
+        epsilon = self.epsilon if training else epsilon_eval
 
         # 랜덤하게 행동 결정
         if self.epsilon > random.random():  
@@ -153,10 +154,6 @@ class DQNAgent:
     def update_target(self):
         self.target_network.load_state_dict(self.network.state_dict())
 
-    # 엡실론 설정
-    def set_epsilon(self, epsilon):
-        self.epsilon = epsilon
-
     # 네트워크 모델 저장 
     def save_model(self):
         print("... Save Model ...")
@@ -194,7 +191,6 @@ if __name__ == '__main__':
         if step == run_step:
             if train_mode:
                 agent.save_model()
-                agent.set_epsilon(epsilon_eval)
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)

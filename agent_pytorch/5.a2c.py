@@ -16,11 +16,11 @@ action_size = 4
 load_model = False
 train_mode = True
 
-discount_factor = 0.99
-learning_rate = 5e-4
+discount_factor = 0.9
+learning_rate = 0.00025
 
-run_step = 50000 if train_mode else 0
-test_step = 10000
+run_step = 30000 if train_mode else 0
+test_step = 5000
 
 print_interval = 10
 save_interval = 100
@@ -113,10 +113,10 @@ class A2CAgent:
         }, save_path+'/ckpt')
 
         # 학습 기록 
-    def write_summray(self, score, loss, epsilon, step):
+    def write_summray(self, score, actor_loss, critic_loss, step):
         self.writer.add_scalar("run/score", score, step)
-        self.writer.add_scalar("model/loss", loss, step)
-        self.writer.add_scalar("model/epsilon", epsilon, step)
+        self.writer.add_scalar("model/actor_loss", actor_loss, step)
+        self.writer.add_scalar("model/critic_loss", critic_loss, step)
 
 # Main 함수 -> 전체적으로 DQN 알고리즘을 진행 
 if __name__ == '__main__':
@@ -140,6 +140,7 @@ if __name__ == '__main__':
         if step == run_step:
             if train_mode:
                 agent.save_model()
+            print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
 
