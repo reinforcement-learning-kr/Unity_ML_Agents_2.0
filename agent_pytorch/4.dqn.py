@@ -25,7 +25,7 @@ discount_factor = 0.9
 learning_rate = 0.00025
 
 run_step = 30000 if train_mode else 0
-test_step = 5000
+test_step = 3000
 train_start_step = 5000
 target_update_step = 500
 
@@ -95,6 +95,7 @@ class DQNAgent:
         self.writer = SummaryWriter(save_path)
 
         if load_model == True:
+            print(f"... Load Model from {load_path}/ckpt")
             checkpoint = torch.load(load_path+'/ckpt', map_location=device)
             self.network.load_state_dict(checkpoint["network"])
             self.target_network.load_state_dict(checkpoint["network"])
@@ -156,7 +157,7 @@ class DQNAgent:
 
     # 네트워크 모델 저장 
     def save_model(self):
-        print("... Save Model ...")
+        print(f"... Save Model to {save_path}/ckpt...")
         torch.save({
             "network" : self.network.state_dict(),
             "optimizer" : self.optimizer.state_dict(),
