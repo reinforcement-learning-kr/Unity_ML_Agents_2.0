@@ -179,10 +179,10 @@ if __name__ == '__main__':
     env.reset()
 
     # 유니티 브레인 설정 
-    group_name = list(env.behavior_specs.keys())[0]
-    group_spec = env.behavior_specs[group_name]
+    behavior_name = list(env.behavior_specs.keys())[0]
+    spec = env.behavior_specs[behavior_name]
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
-    dec, term = env.get_steps(group_name)
+    dec, term = env.get_steps(behavior_name)
 
     # DQNAgent 클래스를 agent로 정의 
     agent = DQNAgent()
@@ -201,10 +201,10 @@ if __name__ == '__main__':
         real_action = action + 1
         action_tuple = ActionTuple()
         action_tuple.add_discrete(real_action)
-        env.set_actions(group_name, action_tuple)
+        env.set_actions(behavior_name, action_tuple)
         env.step()
 
-        dec, term = env.get_steps(group_name)
+        dec, term = env.get_steps(behavior_name)
         done = len(term.agent_id) > 0
         reward = term.reward if done else dec.reward
         next_state = term.obs[OBS] if done else dec.obs[OBS]
