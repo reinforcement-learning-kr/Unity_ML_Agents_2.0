@@ -2,7 +2,6 @@
 import numpy as np
 import datetime
 import platform
-
 import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
@@ -84,7 +83,7 @@ class A2CAgent:
 
     def train_model(self, state, action, reward, next_state, done):
         state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
-                                                        [state, action, reward, next_state, done]) #s,a,r,s'
+                                                        [state, action, reward, next_state, done])
         pi, value = self.a2c(state)
 
         #가치신경망
@@ -124,7 +123,6 @@ if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
     env = UnityEnvironment(file_name=env_name,
-                        #    no_graphics=True,
                            side_channels=[engine_configuration_channel])
     env.reset()
 

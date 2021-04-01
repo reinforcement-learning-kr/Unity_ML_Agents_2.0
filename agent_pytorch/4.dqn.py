@@ -108,7 +108,7 @@ class DQNAgent:
         epsilon = self.epsilon if training else epsilon_eval
 
         # 랜덤하게 행동 결정
-        if self.epsilon > random.random():  
+        if epsilon > random.random():  
             action = np.random.randint(0, action_size, size=(state.shape[0],1))
         # 네트워크 연산에 따라 행동 결정
         else:
@@ -174,7 +174,6 @@ if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
     env = UnityEnvironment(file_name=env_name,
-                        #    no_graphics=True,
                            side_channels=[engine_configuration_channel])
     env.reset()
 
