@@ -46,6 +46,7 @@ load_path = f"./saved_models/{game}/A2C/20210217000848"
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+# A2C 클래스 -> Actor Network, Critic Network 정의 
 class A2C(torch.nn.Module):
     def __init__(self, **kwargs):
         super(A2C, self).__init__(**kwargs)
