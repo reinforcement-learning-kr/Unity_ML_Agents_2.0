@@ -90,13 +90,13 @@ class A2CAgent:
         #가치신경망
         with torch.no_grad():
             _, next_value = self.a2c(next_state)
-            target  = reward + (1-done) * discount_factor * next_value
-        critic_loss = F.mse_loss(target, value)
+            target_value  = reward + (1-done) * discount_factor * next_value
+        critic_loss = F.mse_loss(target_value, value)
 
         #정책신경망
         eye = torch.eye(action_size).to(device)
         one_hot_action = eye[action.view(-1).long()]
-        advantage = (target - value).detach()
+        advantage = (target_value - value).detach()
         actor_loss = -(torch.log((one_hot_action * pi).sum(1))*advantage).mean()
         total_loss = critic_loss + actor_loss
 
