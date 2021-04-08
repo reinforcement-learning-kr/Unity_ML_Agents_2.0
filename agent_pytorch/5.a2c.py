@@ -53,7 +53,7 @@ class A2C(torch.nn.Module):
         self.d1 = torch.nn.Linear(state_size, 128)
         self.d2 = torch.nn.Linear(128, 128)
         self.pi = torch.nn.Linear(128, action_size)
-        self.v = torch.nn.Linear(128, action_size)
+        self.v = torch.nn.Linear(128, 1)
         
     def forward(self, x):
         x = F.relu(self.d1(x))
