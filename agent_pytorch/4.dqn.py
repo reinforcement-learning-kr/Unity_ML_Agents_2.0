@@ -64,11 +64,14 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class DQN(torch.nn.Module):
     def __init__(self, **kwargs):
         super(DQN, self).__init__(**kwargs)
-        self.conv1 = torch.nn.Conv2d(in_channels=state_size[0], out_channels=32, kernel_size=8, stride=4)
+        self.conv1 = torch.nn.Conv2d(in_channels=state_size[0], out_channels=32,
+                                     kernel_size=8, stride=4)
         dim1 = ((state_size[1] - 8)//4 + 1, (state_size[2] - 8)//4 + 1)
-        self.conv2 = torch.nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)
+        self.conv2 = torch.nn.Conv2d(in_channels=32, out_channels=64,
+                                     kernel_size=4, stride=2)
         dim2 = ((dim1[0] - 4)//2 + 1, (dim1[1] - 4)//2 + 1)
-        self.conv3 = torch.nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)
+        self.conv3 = torch.nn.Conv2d(in_channels=64, out_channels=64,
+                                     kernel_size=3, stride=1)
         dim3 = ((dim2[0] - 3)//1 + 1, (dim2[1] - 3)//1 + 1)
 
         self.flat = torch.nn.Flatten()
