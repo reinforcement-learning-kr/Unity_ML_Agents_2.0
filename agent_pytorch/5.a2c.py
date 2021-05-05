@@ -119,7 +119,7 @@ class A2CAgent:
         self.writer.add_scalar("model/actor_loss", actor_loss, step)
         self.writer.add_scalar("model/critic_loss", critic_loss, step)
 
-# Main 함수 -> 전체적으로 DQN 알고리즘을 진행 
+# Main 함수 -> 전체적으로 A2C 알고리즘을 진행 
 if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
