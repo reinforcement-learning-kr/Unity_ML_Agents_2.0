@@ -35,7 +35,7 @@ save_interval = 100
 epsilon_eval = 0.05
 epsilon_init = 1.0 if train_mode else epsilon_eval
 epsilon_min = 0.1
-explore_step = run_step * 0.1
+explore_step = run_step * 0.8
 eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 
 # 그리드월드 환경 설정 (게임판 크기=5, 목적지 수=1, 장애물 수=1)
