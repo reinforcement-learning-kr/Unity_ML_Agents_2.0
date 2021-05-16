@@ -13,19 +13,19 @@ from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 
 # DQN을 위한 파라미터 값 세팅 
-state_size = [3,64, 84]
+state_size = [6, 64, 84]
 action_size = 4 
 
-load_model = False
-train_mode = True
+load_model = True
+train_mode = False
 
 batch_size = 32
 mem_maxlen = 10000
 discount_factor = 0.9
 learning_rate = 0.00025
 
-run_step = 30000 if train_mode else 0
-test_step = 3000
+run_step = 50000 if train_mode else 0
+test_step = 5000
 train_start_step = 5000
 target_update_step = 500
 
@@ -38,11 +38,10 @@ epsilon_min = 0.1
 explore_step = run_step * 0.8
 eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 
-# 그리드월드 환경 설정 (게임판 크기=5, 목적지 수=1, 장애물 수=1)
-env_config = {"gridSize": 5, "numGoals": 1, "numObstacles": 1}
+# 그리드월드 환경 설정 (게임판 크기=5, + 목적지 수=1, X 목적지 수=1)
+env_config = {"gridSize": 5, "numPlusGoals": 1, "numExGoals": 1}
 VISUAL_OBS = 0
 VECTOR_OBS = 1
-OBS = VISUAL_OBS
 
 # 유니티 환경 경로 
 game = "GridWorld"
@@ -55,7 +54,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/DQN/{date_time}"
-load_path = f"./saved_models/{game}/DQN/20210206005012"
+load_path = f"./saved_models/{game}/DQN/20210514201212"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -197,8 +196,8 @@ if __name__ == '__main__':
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
-
-        state = dec.obs[OBS]
+        preprocess = lambda vis, vec: np.concatenate((vis*vec[0][0], vis*vec[0][1]), axis=-1) 
+        state = preprocess(dec.obs[VISUAL_OBS],dec.obs[VECTOR_OBS])
         action = agent.get_action(state, train_mode)
         real_action = action + 1
         action_tuple = ActionTuple()
@@ -209,7 +208,8 @@ if __name__ == '__main__':
         dec, term = env.get_steps(behavior_name)
         done = len(term.agent_id) > 0
         reward = term.reward if done else dec.reward
-        next_state = term.obs[OBS] if done else dec.obs[OBS]
+        next_state = preprocess(term.obs[VISUAL_OBS], term.obs[VECTOR_OBS]) if done\
+                     else preprocess(dec.obs[VISUAL_OBS], dec.obs[VECTOR_OBS])
         score += reward[0]
 
         if train_mode and len(state) > 0:
