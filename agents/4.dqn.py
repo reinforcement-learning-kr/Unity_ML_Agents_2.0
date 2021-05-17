@@ -13,11 +13,11 @@ from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 
 # DQN을 위한 파라미터 값 세팅 
-state_size = [6, 64, 84]
+state_size = [3*2, 64, 84]
 action_size = 4 
 
-load_model = True
-train_mode = False
+load_model = False
+train_mode = True
 
 batch_size = 32
 mem_maxlen = 10000
@@ -41,7 +41,9 @@ eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 # 그리드월드 환경 설정 (게임판 크기=5, + 목적지 수=1, X 목적지 수=1)
 env_config = {"gridSize": 5, "numPlusGoals": 1, "numExGoals": 1}
 VISUAL_OBS = 0
-VECTOR_OBS = 1
+GOAL_OBS = 1
+VECTOR_OBS = 2
+OBS = VISUAL_OBS
 
 # 유니티 환경 경로 
 game = "GridWorld"
@@ -196,8 +198,9 @@ if __name__ == '__main__':
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
-        preprocess = lambda vis, vec: np.concatenate((vis*vec[0][0], vis*vec[0][1]), axis=-1) 
-        state = preprocess(dec.obs[VISUAL_OBS],dec.obs[VECTOR_OBS])
+
+        preprocess = lambda obs, goal: np.concatenate((obs*goal[0][0], obs*goal[0][1]), axis=-1) 
+        state = preprocess(dec.obs[OBS],dec.obs[GOAL_OBS])
         action = agent.get_action(state, train_mode)
         real_action = action + 1
         action_tuple = ActionTuple()
@@ -208,8 +211,8 @@ if __name__ == '__main__':
         dec, term = env.get_steps(behavior_name)
         done = len(term.agent_id) > 0
         reward = term.reward if done else dec.reward
-        next_state = preprocess(term.obs[VISUAL_OBS], term.obs[VECTOR_OBS]) if done\
-                     else preprocess(dec.obs[VISUAL_OBS], dec.obs[VECTOR_OBS])
+        next_state = preprocess(term.obs[OBS], term.obs[GOAL_OBS]) if done\
+                     else preprocess(dec.obs[OBS], dec.obs[GOAL_OBS])
         score += reward[0]
 
         if train_mode and len(state) > 0:
