@@ -4,12 +4,13 @@ import datetime
 import platform
 import torch
 import torch.nn.functional as F
+from torch.distributions import Categorical
 from torch.utils.tensorboard import SummaryWriter
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 #파라미터 값 세팅 
-state_size = 6
+state_size = 6*2
 action_size = 4 
 
 load_model = False
@@ -18,8 +19,8 @@ train_mode = True
 discount_factor = 0.9
 learning_rate = 0.00025
 
-run_step = 30000 if train_mode else 0
-test_step = 3000
+run_step = 50000 if train_mode else 0
+test_step = 5000
 
 print_interval = 10
 save_interval = 100
@@ -27,7 +28,8 @@ save_interval = 100
 # 그리드월드 환경 설정 (게임판 크기=5, + 목적지 수=1, X 목적지 수=1)
 env_config = {"gridSize": 5, "numPlusGoals": 1, "numExGoals": 1}
 VISUAL_OBS = 0
-VECTOR_OBS = 1
+GOAL_OBS = 1
+VECTOR_OBS = 2
 OBS = VECTOR_OBS
 
 # 유니티 환경 경로 
@@ -79,7 +81,8 @@ class A2CAgent:
 
         # 네트워크 연산에 따라 행동 결정
         pi, _ = self.a2c(torch.FloatTensor(state).to(device))
-        action = np.array([np.random.choice(action_size, p=p, size=(1)) for p in pi.data.cpu().numpy()])
+        m = Categorical(pi)
+        action = m.sample().unsqueeze(-1).cpu().numpy()
         return action
 
     def train_model(self, state, action, reward, next_state, done):
@@ -144,7 +147,8 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
 
-        state = dec.obs[OBS]
+        preprocess = lambda obs, goal: np.concatenate((obs*goal[0][0], obs*goal[0][1]), axis=-1) 
+        state = preprocess(dec.obs[OBS],dec.obs[GOAL_OBS])
         action = agent.get_action(state, train_mode)
         real_action = action + 1
         action_tuple = ActionTuple()
@@ -156,7 +160,8 @@ if __name__ == '__main__':
         dec, term = env.get_steps(behavior_name)
         done = len(term.agent_id) > 0
         reward = term.reward if done else dec.reward
-        next_state = term.obs[OBS] if done else dec.obs[OBS]
+        next_state = preprocess(term.obs[OBS], term.obs[GOAL_OBS]) if done\
+                     else preprocess(dec.obs[OBS], dec.obs[GOAL_OBS])
         score += reward[0]
 
         if train_mode and len(state) > 0:
