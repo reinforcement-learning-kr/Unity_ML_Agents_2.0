@@ -75,6 +75,7 @@ class A2CAgent:
             self.a2c.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
 
+    # 정책을 통해 행동 결정 
     def get_action(self, state, training=True):
         #  네트워크 모드 설정
         self.a2c.train(training)
@@ -85,6 +86,7 @@ class A2CAgent:
         action = m.sample().unsqueeze(-1).cpu().numpy()
         return action
 
+    # 학습 수행
     def train_model(self, state, action, reward, next_state, done):
         state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
                                                         [state, action, reward, next_state, done])
@@ -109,6 +111,7 @@ class A2CAgent:
 
         return actor_loss.item(), critic_loss.item()
 
+    # 네트워크 모델 저장
     def save_model(self):
         print(f"... Save Model to {save_path}/ckpt...")
         torch.save({
