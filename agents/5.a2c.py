@@ -4,7 +4,6 @@ import datetime
 import platform
 import torch
 import torch.nn.functional as F
-from torch.distributions import Categorical
 from torch.utils.tensorboard import SummaryWriter
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
@@ -82,8 +81,7 @@ class A2CAgent:
 
         # 네트워크 연산에 따라 행동 결정
         pi, _ = self.a2c(torch.FloatTensor(state).to(device))
-        m = Categorical(pi)
-        action = m.sample().unsqueeze(-1).cpu().numpy()
+        action = torch.multinomial(pi, num_samples=1).cpu().numpy()
         return action
 
     # 학습 수행
