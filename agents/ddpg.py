@@ -93,7 +93,7 @@ class Critic(torch.nn.Module):
 
     def forward(self, state, action):
         xs = F.relu(self.fc1(state))
-        x = torch.cat((xs, action), dim=1)
+        x = torch.cat((xs, action), dim=2)
         x = F.relu(self.fc2(x))
 
         return self.fc3(x)
@@ -128,70 +128,25 @@ class DDPGAgent():
         self.memory.append((state, action, reward, next_state, done))
 
     def train_model(self):
-        mini_batch = random.sample(self.memory, batch_size)
-        states = np.asarray([sample[0]
-                            for sample in mini_batch])
-        actions = np.asarray([sample[1]
-                             for sample in mini_batch])
-        rewards = np.asarray([sample[2]
-                             for sample in mini_batch])
-        next_states = np.asarray([sample[3]
-                                 for sample in mini_batch])
-        dones = np.asarray([sample[4] for sample in mini_batch])
+        mini_batch  = random.sample(self.memory, batch_size)
+        states      = np.stack([b[0] for b in mini_batch], axis=0)
+        actions     = np.stack([b[1] for b in mini_batch], axis=0)
+        rewards     = np.stack([b[2] for b in mini_batch], axis=0)
+        next_states = np.stack([b[3] for b in mini_batch], axis=0)
+        dones       = np.stack([b[4] for b in mini_batch], axis=0)
 
-        # states = torch.from_numpy(states.astype(np.double))
-        # actions = torch.from_numpy(actions.astype(np.double))
-        # rewards = torch.from_numpy(rewards.astype(np.double))
-        # next_states = torch.from_numpy(next_states.astype(np.double))
-        # dones = torch.from_numpy(dones.astype(np.double))
+        states, actions, rewards, next_states, dones = map(lambda x: torch.FloatTensor(x).to(device), [states, actions, rewards, next_states, dones])
 
-        # states = (torch.from_numpy(
-        #     states.astype(np.double))).float()
+        eye = torch.eye(action_size).to(device)
+        one_hot_actions = eye[actions.view(-1).long()]
+        q = (self.actor_local(states) * one_hot_actions).sum(1, keepdims=True)    
 
-        # actions = (torch.from_numpy(
-        #     actions.astype(np.double))).float()
+        with torch.no_grad():
+            next_actions = self.actor_target(next_states)
+            target_next_q = self.critic_target(next_states, next_actions)
+            target_q = rewards + target_next_q.max(1, keepdims=True).values * ((1 - dones) * discount_factor)
 
-        # rewards = (torch.from_numpy(
-        #     rewards.astype(np.double))).float()
-
-        # next_states = (torch.from_numpy(
-        #     next_states.astype(np.double))).float()
-
-        # dones = (torch.from_numpy(
-        #     dones.astype(np.double))).float()
-
-        states = np.squeeze(states.astype('float32'))
-        actions = np.squeeze(actions.astype('float32'))
-        rewards = np.squeeze(rewards.astype('float32'))
-        next_states = np.squeeze(next_states.astype('float32'))
-        dones = np.squeeze(dones.astype('float32'))
-
-        # print('------------------')
-        # print(states.shape)
-        # print(actions.shape)
-        #  print(rewards.shape)
-        # print(next_states.shape)
-        #  print(dones.shape)
-        # print('------------------')
-
-        rewards = rewards.reshape(-1, 1)
-        dones = dones.reshape(-1, 1)
-
-        states = torch.from_numpy(states)
-        actions = torch.from_numpy(actions)
-        rewards = torch.from_numpy(rewards)
-        next_states = torch.from_numpy(next_states)
-        dones = torch.from_numpy(dones)
-
-        actions_next = self.actor_target(next_states)
-
-        Q_targets_next = self.critic_target(next_states, actions_next)
-
-        Q_targets = rewards + (discount_factor * Q_targets_next * (1 - dones))
-
-        Q_expected = self.critic_local(states, actions)
-
-        critic_loss = F.mse_loss(Q_expected, Q_targets)
+        critic_loss = F.mse_loss(q, target_q)
 
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -203,30 +158,11 @@ class DDPGAgent():
         actor_loss.backward()
         self.actor_optimizer.step()
 
-        # target_actor_actions = self.actor_target(next_states)
-        # target_critic_predict_qs = self.critic_target(
-        #     next_states, target_actor_actions)
-
-        # target_qs = np.asarray([reward + discount_factor * (1 - done) * target_critic_predict_q
-        #                         for reward, target_critic_predict_q, done in zip(rewards, target_critic_predict_qs, dones)])
-
-        # expected_qs = self.critic_local(states, actions)
-
-        # critic_loss = F.mse_loss(expected_qs, target_qs)
-
-        # self.critic_optimizer.zero_grad()
-        # critic_loss.backward()
-        # self.critic_optimizer.step()
-
-        # expected_action = self.actor_local(states)
-        # actor_loss = -self.critic_local(states, expected_action).mean()
-
-        # self.actor_optimizer.zero_grad()
-        # actor_loss.backward()
-        # self.actor_optimizer.step()
 
         self.soft_update(self.critic_local, self.critic_target)
         self.soft_update(self.actor_local, self.actor_target)
+
+        return actor_loss.item(), critic_loss.item()
 
     def soft_update(self, local_model, target_model):
 
@@ -277,13 +213,13 @@ if __name__ == '__main__':
 
             episode_rewards += reward[0]
 
-            if train_mode:
+            if train_mode and len(state) > 0:
                 agent.append_sample(state, action, reward, next_state, done)
 
             state = next_state
 
-            if done:
-                break
+            # if done:
+            #     break
 
             if episode > start_train_episode and train_mode:
                 agent.train_model()
