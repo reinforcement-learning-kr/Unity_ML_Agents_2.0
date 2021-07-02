@@ -22,7 +22,7 @@ discount_factor = 0.99
 actor_lr = 1e-4
 critic_lr = 5e-4
 
-batch_size = 8
+batch_size = 64
 mem_maxlen = 50000
 
 tau = 1e-3
@@ -31,8 +31,8 @@ mu = 0
 theta = 1e-3
 sigma = 2e-3
 
-start_train_episode = 5
-run_episode = 500
+start_train_episode = 100
+run_episode = 10000
 test_episode = 100
 
 env_config = {"gridSize": 5, "numPlusGoals": 1, "numExGoals": 1}
@@ -139,12 +139,14 @@ class DDPGAgent():
 
         eye = torch.eye(action_size).to(device)
         one_hot_actions = eye[actions.view(-1).long()]
-        q = (self.actor_local(states) * one_hot_actions).sum(1, keepdims=True)    
+        pi = (self.actor_local(states) * one_hot_actions).sum(1, keepdims=True)    
+
+        q = self.critic_local(states, actions)
 
         with torch.no_grad():
             next_actions = self.actor_target(next_states)
             target_next_q = self.critic_target(next_states, next_actions)
-            target_q = rewards + target_next_q.max(1, keepdims=True).values * ((1 - dones) * discount_factor)
+            target_q = rewards.view(8, 1, 1) + (target_next_q * (1 - dones.view(8,1,1)) * discount_factor)
 
         critic_loss = F.mse_loss(q, target_q)
 
@@ -187,7 +189,7 @@ if __name__ == '__main__':
 
     step = 0
 
-    for episode in range(1000):
+    for episode in range(start_train_episode + run_episode):
 
         state = dec.obs[0]
         episode_rewards = 0
