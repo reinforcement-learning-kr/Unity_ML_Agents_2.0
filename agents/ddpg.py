@@ -22,7 +22,7 @@ discount_factor = 0.99
 actor_lr = 1e-4
 critic_lr = 5e-4
 
-batch_size = 64
+batch_size = 32
 mem_maxlen = 50000
 
 tau = 1e-3
@@ -146,7 +146,7 @@ class DDPGAgent():
         with torch.no_grad():
             next_actions = self.actor_target(next_states)
             target_next_q = self.critic_target(next_states, next_actions)
-            target_q = rewards.view(8, 1, 1) + (target_next_q * (1 - dones.view(8,1,1)) * discount_factor)
+            target_q = rewards.view(batch_size, 1, 1) + (target_next_q * (1 - dones.view(batch_size,1,1)) * discount_factor)
 
         critic_loss = F.mse_loss(q, target_q)
 
