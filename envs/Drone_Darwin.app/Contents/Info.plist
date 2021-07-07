@@ -7,7 +7,11 @@
     <key>CFBundleExecutable</key>
     <string>Drone</string>
     <key>CFBundleGetInfoString</key>
+<<<<<<< HEAD
+    <string>Unity Player version 2021.1.6f1 (c0fade0cc7e9). (c) 2021 Unity Technologies ApS. All rights reserved.</string>
+=======
     <string>Unity Player version 2021.2.0a16 (663b19a0829e). (c) 2021 Unity Technologies ApS. All rights reserved.</string>
+>>>>>>> 552efd5f201b2d3569642247ae14b9dd458b1cce
     <key>CFBundleIconFile</key>
     <string>PlayerIcon.icns</string>
     <key>CFBundleIdentifier</key>
@@ -40,6 +44,10 @@
     <key>NSPrincipalClass</key>
     <string>PlayerApplication</string>
     <key>UnityBuildNumber</key>
+<<<<<<< HEAD
+    <string>c0fade0cc7e9</string>
+=======
     <string>663b19a0829e</string>
+>>>>>>> 552efd5f201b2d3569642247ae14b9dd458b1cce
   </dict>
 </plist>
