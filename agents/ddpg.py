@@ -2,17 +2,14 @@ import numpy as np
 import datetime
 import platform
 import torch
-import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
     import EngineConfigurationChannel
 from collections import deque
-import tensorflow as tf
-
 import random
 
-# set param's
+# DDPG를 위한 파라미터 값 세팅
 state_size = 9
 action_size = 3
 
@@ -26,6 +23,7 @@ actor_lr = 1e-4
 critic_lr = 5e-4
 tau = 1e-3
 
+# OU noise 파라미터
 mu = 0
 theta = 1e-3
 sigma = 2e-3
@@ -37,26 +35,24 @@ train_start_step = 5000
 print_interval = 10
 save_interval = 100
 
-# run_episode = 10000
-# test_episode = 100
-
+# 유니티 환경 경로
 game = "Drone"
 os_name = platform.system()
-# if os_name == 'Windows':
-#     env_name = f"../envs/{game}_{os_name}/{game}"
-# elif os_name == 'Darwin':
-#     env_name = f"../envs/{game}_{os_name}"
-env_name = 'D:/unityProjects/DroneBuild/windows/Drone'
+if os_name == 'Windows':
+    env_name = f"../envs/{game}_{os_name}/{game}"
+elif os_name == 'Darwin':
+    env_name = f"../envs/{game}_{os_name}"
 
+# 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/DDPG/{date_time}"
-load_path = f"./saved_models/{game}/DDPG/20210217000848"
+load_path = f"../saved_models/{game}/DDPG/20210708062701"
 
-# set device ( GPU vs CPU )
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = torch.device("cpu")
+# 연산장치 설정 (GPU or CPU)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+# OU_noise 클래스 -> ou noise 정의 및 파라미터 결정
 class OU_noise:
     def __init__(self):
         self.reset()
@@ -70,6 +66,7 @@ class OU_noise:
         return self.X
 
 
+# Actor 클래스 -> DDPG Actor 클래스 정의
 class Actor(torch.nn.Module):
     def __init__(self):
         super(Actor, self).__init__()
@@ -78,11 +75,12 @@ class Actor(torch.nn.Module):
         self.mu = torch.nn.Linear(128, action_size)
 
     def forward(self, state):
-        x = F.relu(self.fc1(state))
-        x = F.relu(self.fc2(x))
-        return F.tanh(self.mu(x))
+        x = torch.relu(self.fc1(state))
+        x = torch.relu(self.fc2(x))
+        return torch.tanh(self.mu(x))
 
 
+# Critic 클래스 -> DDPG Critic 클래스 정의
 class Critic(torch.nn.Module):
     def __init__(self):
         super(Critic, self).__init__()
@@ -99,6 +97,7 @@ class Critic(torch.nn.Module):
         return self.fc3(x)
 
 
+# DDPGAgent 클래스 -> DDPG 알고리즘을 위한 다양한 함수 정의
 class DDPGAgent():
     def __init__(self):
         self.actor_local = Actor().to(device)
@@ -117,20 +116,20 @@ class DDPGAgent():
 
         self.OU = OU_noise()
         self.memory = deque(maxlen=mem_maxlen)
-        self.writer = tf.summary.create_file_writer(save_path)
+        self.writer = SummaryWriter(save_path)
 
     def get_action(self, state):
 
-        action_ = self.actor_local(torch.FloatTensor(state))
-        # action = self.actor_local(torch.FloatTensor(state).to(device))
-        # action = torch.multinomial(pi, num_samples=1).cpu().numpy()
+        action = self.actor_local(torch.FloatTensor(state).to(device))
+        action = action.cpu().detach().numpy()
 
-        action = action_.detach().numpy()
+        # OU noise 기법에 따라 행동 결정
         noise = self.OU.sample()
 
         return action + noise if train_mode else action
 
     def append_sample(self, state, action, reward, next_state, done):
+        # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
         self.memory.append((state, action, reward, next_state, done))
 
     def train_model(self):
@@ -144,6 +143,7 @@ class DDPGAgent():
         states, actions, rewards, next_states, dones = map(lambda x: torch.FloatTensor(
             x).to(device), [states, actions, rewards, next_states, dones])
 
+        # Critic 업데이트
         next_actions = self.actor_target(next_states)
         next_q = self.critic_target(next_states, next_actions)
         target_q = rewards + (1 - dones) * discount_factor * next_q
@@ -154,54 +154,58 @@ class DDPGAgent():
         critic_loss.backward()
         self.critic_optimizer.step()
 
+        # Actor 업데이트
         actions_pred = self.actor_local(states)
         actor_loss = -self.critic_local(states, actions_pred).mean()
+
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
 
+        # 소프트 타겟 업데이트
         self.soft_update(self.critic_local, self.critic_target)
         self.soft_update(self.actor_local, self.actor_target)
 
         return actor_loss.item(), critic_loss.item()
 
+    # 소프트 타겟 업데이트를 위한 함수
     def soft_update(self, local_model, target_model):
 
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(
                 tau * local_param.data + (1.0 - tau) * target_param.data)
 
+    # 네트워크 모델 저장
     def save_model(self):
-        print("... Save Model ...")
+        print(f"... Save Model to {save_path}/ckpt ...")
         torch.save(self.actor_local.state_dict(), save_path+'/actor')
         torch.save(self.critic_local.state_dict(), save_path+'/critic')
 
+    # 학습 기록
     def write_summray(self, score, actor_loss, critic_loss, step):
-        with self.writer.as_default():
-            tf.summary.scalar("run/score", score, step=step)
-            tf.summary.scalar("model/actor_loss", actor_loss, step=step)
-            tf.summary.scalar("model/critic_loss", critic_loss, step=step)
+        self.writer.add_scalar("run/score", score, step)
+        self.writer.add_scalar("model/actor_loss", actor_loss, step)
+        self.writer.add_scalar("model/critic_loss", critic_loss, step)
 
 
+# Main 함수 -> 전체적으로 DDPG 알고리즘을 진행
 if __name__ == '__main__':
-
+    # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
     env = UnityEnvironment(file_name=env_name, side_channels=[
                            engine_configuration_channel])
-
     env.reset()
 
+    # 유니티 브레인 설정
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
-    engine_configuration_channel.set_configuration_parameters(time_scale=10.0)
+    engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
     dec, term = env.get_steps(behavior_name)
 
-    step = 0
-
+    # DDPGAgent 클래스를 agent로 정의
     agent = DDPGAgent()
 
     actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
-
     for step in range(run_step + test_step):
         if step == run_step:
             if train_mode:
@@ -213,12 +217,7 @@ if __name__ == '__main__':
                 time_scale=1.0)
 
         state = dec.obs[0]
-        # state = torch.FloatTensor(state).to(device)
-
         action = agent.get_action(state)
-
-        # env.set_actions(behavior_name, action)
-        # env.step()
 
         action_tuple = ActionTuple()
         action_tuple.add_continuous(action)
@@ -228,15 +227,6 @@ if __name__ == '__main__':
         dec, term = env.get_steps(behavior_name)
         done = len(term.agent_id) > 0
         reward = term.reward[0] if done else dec.reward[0]
-
-        # if done:
-        #     next_state = term.obs[0]
-        #     next_state = torch.FloatTensor(next_state).to(device)
-
-        # else:
-        #     next_state = dec.obs[0]
-        #     next_state = torch.FloatTensor(next_state).to(device)
-
         next_state = term.obs[0] if done else dec.obs[0]
         score += reward
 
@@ -245,6 +235,7 @@ if __name__ == '__main__':
                                 reward], next_state[0], [done])
 
         if train_mode and step > max(batch_size, train_start_step):
+            # 학습 수행
             actor_loss, critic_loss = agent.train_model()
             actor_losses.append(actor_loss)
             critic_losses.append(critic_loss)
@@ -254,6 +245,7 @@ if __name__ == '__main__':
             scores.append(score)
             score = 0
 
+            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록
             if episode % print_interval == 0:
                 mean_score = torch.mean(torch.FloatTensor(scores))
                 mean_actor_loss = torch.mean(torch.FloatTensor(actor_losses))
@@ -264,6 +256,7 @@ if __name__ == '__main__':
 
                 print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / Actor loss: {mean_actor_loss:.2f} / Critic loss: {mean_critic_loss:.4f}")
 
+            # 네트워크 모델 저장
             if train_mode and episode % save_interval == 0:
                 agent.save_model()
 
