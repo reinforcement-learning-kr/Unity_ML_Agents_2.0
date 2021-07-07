@@ -2,6 +2,7 @@ import numpy as np
 import datetime
 import platform
 import torch
+import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
@@ -46,7 +47,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/DDPG/{date_time}"
-load_path = f"../saved_models/{game}/DDPG/20210708062701"
+load_path = f"./saved_models/{game}/DDPG/20210708062701"
 
 # 연산장치 설정 (GPU or CPU)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -90,9 +91,9 @@ class Critic(torch.nn.Module):
         self.fc3 = torch.nn.Linear(128, 1)
 
     def forward(self, state, action):
-        xs = F.relu(self.fc1(state))
+        xs = torch.relu(self.fc1(state))
         x = torch.cat((xs, action), dim=-1)
-        x = F.relu(self.fc2(x))
+        x = torch.relu(self.fc2(x))
 
         return self.fc3(x)
 
@@ -100,19 +101,19 @@ class Critic(torch.nn.Module):
 # DDPGAgent 클래스 -> DDPG 알고리즘을 위한 다양한 함수 정의
 class DDPGAgent():
     def __init__(self):
-        self.actor_local = Actor().to(device)
-        self.actor_target = Actor().to(device)
+        self.actor = Actor().to(device)
+        self.target_actor = Actor().to(device)
         self.actor_optimizer = torch.optim.Adam(
-            self.actor_local.parameters(), lr=actor_lr)
+            self.actor.parameters(), lr=actor_lr)
 
-        self.critic_local = Critic().to(device)
-        self.critic_target = Critic().to(device)
+        self.critic = Critic().to(device)
+        self.target_critic = Critic().to(device)
         self.critic_optimizer = torch.optim.Adam(
-            self.critic_local.parameters(), lr=critic_lr)
+            self.critic.parameters(), lr=critic_lr)
 
         if load_model == True:
-            self.actor_local.load_state_dict(torch.load(load_path+'/actor'))
-            self.critic_local.load_state_dict(torch.load(load_path+'/critic'))
+            self.actor.load_state_dict(torch.load(load_path+'/actor'))
+            self.critic.load_state_dict(torch.load(load_path+'/critic'))
 
         self.OU = OU_noise()
         self.memory = deque(maxlen=mem_maxlen)
@@ -120,7 +121,7 @@ class DDPGAgent():
 
     def get_action(self, state):
 
-        action = self.actor_local(torch.FloatTensor(state).to(device))
+        action = self.actor(torch.FloatTensor(state).to(device))
         action = action.cpu().detach().numpy()
 
         # OU noise 기법에 따라 행동 결정
@@ -144,10 +145,10 @@ class DDPGAgent():
             x).to(device), [states, actions, rewards, next_states, dones])
 
         # Critic 업데이트
-        next_actions = self.actor_target(next_states)
-        next_q = self.critic_target(next_states, next_actions)
+        next_actions = self.target_actor(next_states)
+        next_q = self.target_critic(next_states, next_actions)
         target_q = rewards + (1 - dones) * discount_factor * next_q
-        q = self.critic_local(states, actions)
+        q = self.critic(states, actions)
         critic_loss = F.mse_loss(target_q, q)
 
         self.critic_optimizer.zero_grad()
@@ -155,16 +156,16 @@ class DDPGAgent():
         self.critic_optimizer.step()
 
         # Actor 업데이트
-        actions_pred = self.actor_local(states)
-        actor_loss = -self.critic_local(states, actions_pred).mean()
+        actions_pred = self.actor(states)
+        actor_loss = -self.critic(states, actions_pred).mean()
 
         self.actor_optimizer.zero_grad()
         actor_loss.backward()
         self.actor_optimizer.step()
 
         # 소프트 타겟 업데이트
-        self.soft_update(self.critic_local, self.critic_target)
-        self.soft_update(self.actor_local, self.actor_target)
+        self.soft_update(self.critic, self.target_critic)
+        self.soft_update(self.actor, self.target_actor)
 
         return actor_loss.item(), critic_loss.item()
 
@@ -178,8 +179,8 @@ class DDPGAgent():
     # 네트워크 모델 저장
     def save_model(self):
         print(f"... Save Model to {save_path}/ckpt ...")
-        torch.save(self.actor_local.state_dict(), save_path+'/actor')
-        torch.save(self.critic_local.state_dict(), save_path+'/critic')
+        torch.save(self.actor.state_dict(), save_path+'/actor')
+        torch.save(self.critic.state_dict(), save_path+'/critic')
 
     # 학습 기록
     def write_summray(self, score, actor_loss, critic_loss, step):
