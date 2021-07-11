@@ -48,9 +48,9 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/DDPG/{date_time}"
-load_path = f"./saved_models/{game}/DDPG/20210708062701"
+load_path = f"./saved_models/{game}/DDPG/20210709235643"
 
-# 연산장치 설정 (GPU or CPU)
+# 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # OU_noise 클래스 -> ou noise 정의 및 파라미터 결정

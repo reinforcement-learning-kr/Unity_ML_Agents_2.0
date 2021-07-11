@@ -20,22 +20,22 @@ load_model = False
 train_mode = True
 
 batch_size = 32
-mem_maxlen = 100000
+mem_maxlen = 50000
 discount_factor = 0.9
 learning_rate = 0.00025
 
-run_step = 500000 if train_mode else 0
-test_step = 50000
+run_step = 1000000 if train_mode else 0
+test_step = 100000
 train_start_step = 50000
 target_update_step = 10000
 
-print_interval = 10
-save_interval = 100
+print_interval = 50
+save_interval = 500
 
 epsilon_eval = 0.05
 epsilon_init = 1.0 if train_mode else epsilon_eval
 epsilon_min = 0.1
-explore_step = run_step * 0.1
+explore_step = run_step * 0.5
 eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 
 # 유니티 환경 경로 
@@ -49,7 +49,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/ADQN/{date_time}"
-load_path = f"./saved_models/{game}/ADQN/20210514201212"
+load_path = f"./saved_models/{game}/ADQN/20210710003410"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -76,11 +76,12 @@ class DQNAgent:
         self.memory = deque(maxlen=mem_maxlen)
         self.epsilon = epsilon_init
         self.save_path = f"{save_path}/{id}"
+        self.load_path = f"{load_path}/{id}"
         self.writer = SummaryWriter(self.save_path)
 
         if load_model == True:
-            print(f"... Load Model from {load_path}/ckpt")
-            checkpoint = torch.load(load_path+'/ckpt', map_location=device)
+            print(f"... Load Model from {self.load_path}/ckpt")
+            checkpoint = torch.load(self.load_path+'/ckpt', map_location=device)
             self.network.load_state_dict(checkpoint["network"])
             self.target_network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
