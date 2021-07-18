@@ -26,16 +26,16 @@ learning_rate = 0.00025
 
 run_step = 1000000 if train_mode else 0
 test_step = 100000
-train_start_step = 50000
+train_start_step = 100000
 target_update_step = 10000
 
-print_interval = 50
-save_interval = 500
+print_interval = 10
+save_interval = 100
 
 epsilon_eval = 0.05
 epsilon_init = 1.0 if train_mode else epsilon_eval
 epsilon_min = 0.1
-explore_step = run_step * 0.5
+explore_step = run_step * 0.8
 eplsilon_delta = (epsilon_init - epsilon_min)/explore_step if train_mode else 0.
 
 # 유니티 환경 경로 
@@ -204,7 +204,7 @@ if __name__ == '__main__':
         score_A += reward_A[0]
         score_B += reward_B[0]
 
-        if train_mode :
+        if train_mode:
             agent_A.append_sample(state_A[0], action_A[0], reward_A, next_state_A[0], [done_A])
             agent_B.append_sample(state_B[0], action_B[0], reward_B, next_state_B[0], [done_B])
     
@@ -234,7 +234,7 @@ if __name__ == '__main__':
                 mean_loss_B = np.mean(losses_B)
                 agent_A.write_summray(mean_score_A, mean_loss_A, agent_A.epsilon, step)
                 agent_B.write_summray(mean_score_B, mean_loss_B, agent_B.epsilon, step)
-                losses, scores = [], []
+                losses_A, losses_B, scores_A, scores_B = [], [], [], []
 
                 print(f"{episode} Episode / Step: {step} / "  +\
                       f"A Score: {mean_score_A:.2f} / B Score: {mean_score_B:.2f} / " +\
