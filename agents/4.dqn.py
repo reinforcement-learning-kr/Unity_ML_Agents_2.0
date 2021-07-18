@@ -215,10 +215,10 @@ if __name__ == '__main__':
                      else preprocess(dec.obs[OBS], dec.obs[GOAL_OBS])
         score += reward[0]
 
-        if train_mode and len(state) > 0:
+        if train_mode:
             agent.append_sample(state[0], action[0], reward, next_state[0], [done])
 
-        if train_mode and step > max(batch_size, train_start_step) :
+        if train_mode and step > max(batch_size, train_start_step):
             # 학습 수행
             loss = agent.train_model()
             losses.append(loss)

@@ -165,7 +165,7 @@ if __name__ == '__main__':
                      else preprocess(dec.obs[OBS], dec.obs[GOAL_OBS])
         score += reward[0]
 
-        if train_mode and len(state) > 0:
+        if train_mode:
             #학습수행
             actor_loss, critic_loss = agent.train_model(state, action[0], [reward], next_state, [done])
             actor_losses.append(actor_loss)
