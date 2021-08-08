@@ -24,8 +24,6 @@ test_step = 5000
 print_interval = 10
 save_interval = 100
 
-# 그리드월드 환경 설정 (게임판 크기=5, + 목적지 수=1, X 목적지 수=1)
-env_config = {"gridSize": 5, "numPlusGoals": 1, "numExGoals": 1}
 VISUAL_OBS = 0
 GOAL_OBS = 1
 VECTOR_OBS = 2
