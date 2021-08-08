@@ -24,9 +24,9 @@ mem_maxlen = 50000
 discount_factor = 0.9
 learning_rate = 0.00025
 
-run_step = 1000000 if train_mode else 0
-test_step = 100000
-train_start_step = 100000
+run_step = 500000 if train_mode else 0
+test_step = 50000
+train_start_step = 50000
 target_update_step = 10000
 
 print_interval = 10
