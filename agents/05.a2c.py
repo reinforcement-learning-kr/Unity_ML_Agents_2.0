@@ -67,7 +67,7 @@ class A2CAgent:
         self.writer = SummaryWriter(save_path)
 
         if load_model == True:
-            print(f"... Load Model from {load_path}/ckpt")
+            print(f"... Load Model from {load_path}/ckpt ...")
             checkpoint = torch.load(load_path+'/ckpt', map_location=device)
             self.a2c.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
@@ -109,7 +109,7 @@ class A2CAgent:
 
     # 네트워크 모델 저장
     def save_model(self):
-        print(f"... Save Model to {save_path}/ckpt...")
+        print(f"... Save Model to {save_path}/ckpt ...")
         torch.save({
             "network" : self.a2c.state_dict(),
             "optimizer" : self.optimizer.state_dict(),

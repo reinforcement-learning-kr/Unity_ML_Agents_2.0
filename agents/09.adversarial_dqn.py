@@ -80,7 +80,7 @@ class DQNAgent:
         self.writer = SummaryWriter(self.save_path)
 
         if load_model == True:
-            print(f"... Load Model from {self.load_path}/ckpt")
+            print(f"... Load Model from {self.load_path}/ckpt ...")
             checkpoint = torch.load(self.load_path+'/ckpt', map_location=device)
             self.network.load_state_dict(checkpoint["network"])
             self.target_network.load_state_dict(checkpoint["network"])
@@ -142,7 +142,7 @@ class DQNAgent:
 
     # 네트워크 모델 저장 
     def save_model(self):
-        print(f"... Save Model to {self.save_path}/ckpt...")
+        print(f"... Save Model to {self.save_path}/ckpt ...")
         torch.save({
             "network" : self.network.state_dict(),
             "optimizer" : self.optimizer.state_dict(),
