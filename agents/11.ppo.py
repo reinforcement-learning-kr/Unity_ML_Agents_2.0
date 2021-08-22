@@ -93,6 +93,8 @@ class PPOAgent:
 
     # 학습 수행
     def train_model(self):
+        self.network.train()
+
         state      = np.stack([m[0] for m in self.memory], axis=0)
         action     = np.stack([m[1] for m in self.memory], axis=0)
         reward     = np.stack([m[2] for m in self.memory], axis=0)
@@ -114,8 +116,10 @@ class PPOAgent:
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
             adv = adv.view(-1, 1)
+            adv = (adv - adv.mean()) / (adv.std() + 1e-7)
+            
             ret = adv + value
-        
+
         # 학습 이터레이션 시작
         actor_losses, critic_losses = [], []
         idxs = np.arange(len(reward))
