@@ -72,7 +72,7 @@ class PPOAgent:
         self.writer = SummaryWriter(save_path)
 
         if load_model == True:
-            print(f"... Load Model from {load_path}/ckpt")
+            print(f"... Load Model from {load_path}/ckpt ...")
             checkpoint = torch.load(load_path+'/ckpt', map_location=device)
             self.network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
@@ -157,7 +157,7 @@ class PPOAgent:
 
     # 네트워크 모델 저장
     def save_model(self):
-        print(f"... Save Model to {save_path}/ckpt...")
+        print(f"... Save Model to {save_path}/ckpt ...")
         torch.save({
             "network" : self.network.state_dict(),
             "optimizer" : self.optimizer.state_dict(),

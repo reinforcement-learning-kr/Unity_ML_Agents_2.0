@@ -108,6 +108,7 @@ class DDPGAgent():
         self.writer = SummaryWriter(save_path)
 
         if load_model == True:
+            print(f"... Load Model from {load_path}/ckpt ...")
             checkpoint = torch.load(load_path+'/ckpt', map_location=device)
             self.actor.load_state_dict(checkpoint["actor"])
             self.target_actor.load_state_dict(checkpoint["actor"])
