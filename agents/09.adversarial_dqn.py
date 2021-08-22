@@ -12,7 +12,7 @@ from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 
-# DQN을 위한 파라미터 값 세팅 
+# Adversarial DQN을 위한 파라미터 값 세팅 
 state_size = 8
 action_size = 3
 
@@ -154,7 +154,7 @@ class DQNAgent:
             self.writer.add_scalar("model/loss", loss, step)
             self.writer.add_scalar("model/epsilon", epsilon, step)
 
-# Main 함수 -> 전체적으로 DQN 알고리즘을 진행 
+# Main 함수 -> 전체적으로 Adversarial DQN 알고리즘을 진행 
 if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     dec_A, term_A = env.get_steps(behavior_A)
     dec_B, term_B = env.get_steps(behavior_B)
 
-    # DQNAgent 클래스를 agent로 정의 
+    # DQNAgent 클래스를 agent_A, agent_B로 정의 
     agent_A = DQNAgent("A")
     agent_B = DQNAgent("B")
     
