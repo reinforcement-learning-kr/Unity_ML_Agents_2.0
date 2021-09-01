@@ -8,6 +8,8 @@ from torch.utils.tensorboard import SummaryWriter
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
+from mlagents_envs.side_channel.environment_parameters_channel\
+                             import EnvironmentParametersChannel
 #파라미터 값 세팅 
 state_size = 30 * 2
 action_size = 5 
@@ -16,22 +18,22 @@ load_model = False
 train_mode = True
 
 discount_factor = 0.9
-learning_rate = 0.00025
+learning_rate = 2.5e-4
 n_step = 128
 batch_size = 32
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.1
-clip_grad_norm = 0.5
+clip_grad_norm = 1
 
-run_step = 50000 if train_mode else 0
-test_step = 5000
+run_step = 500000 if train_mode else 0
+test_step = 50000
 
 print_interval = 10
 save_interval = 100
 
 # 닷지 환경 설정 ()
-# env_config = {}
+env_config = {"ballSpeed": 3, "ballNums": 10, "ballRandom": 0.2, "randomSeed": 77, "agentSpeed": 30}
 
 # 유니티 환경 경로 
 game = "Dodge"
@@ -44,7 +46,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/PPO/{date_time}"
-load_path = f"./saved_models/{game}/PPO/20210217000848"
+load_path = f"./saved_models/{game}/PPO/20210827221933"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -112,11 +114,11 @@ class PPOAgent:
             _, next_value = self.network(next_state)
             delta = reward + (1 - done) * discount_factor * next_value - value
             adv = delta.clone()
-            adv, done = adv.view(-1, n_step), done.view(-1, n_step)
+            adv, done = map(lambda x: x.view(n_step, -1).transpose(1,0).contiguous(), [adv, done])
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
             adv = adv.view(-1, 1)
-            adv = (adv - adv.mean()) / (adv.std() + 1e-7)
+            # adv = (adv - adv.mean()) / (adv.std() + 1e-7)
             
             ret = adv + value
 
@@ -173,15 +175,20 @@ class PPOAgent:
 if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
+    environment_parameters_channel = EnvironmentParametersChannel()
     env = UnityEnvironment(file_name=env_name,
-                           side_channels=[engine_configuration_channel])
+                           side_channels=[engine_configuration_channel,
+                                          environment_parameters_channel])
     env.reset()
 
     # 유니티 브레인 설정 
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
+    for key, value in env_config.items():
+        environment_parameters_channel.set_float_parameter(key, value)
     dec, term = env.get_steps(behavior_name)
+    num_worker = len(dec)
 
     # PPO 클래스를 agent로 정의 
     agent = PPOAgent()
@@ -202,20 +209,26 @@ if __name__ == '__main__':
 
         #환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
-        done = len(term.agent_id) > 0
-        reward = term.reward if done else dec.reward
+        done = [False] * num_worker
         next_state = dec.obs[0]
+        reward = dec.reward
+        for id in term.agent_id:
+            _id = list(term.agent_id).index(id)
+            done[id] = True
+            next_state[id] = term.obs[0][_id]
+            reward[id] = term.reward[_id]
         score += reward[0]
 
         if train_mode:
-            agent.append_sample(state[0], action[0], reward, next_state[0], [done])
+            for id in range(num_worker):
+                agent.append_sample(state[id], action[id], [reward[id]], next_state[id], [done[id]])
             #학습수행
             if (step+1) % n_step == 0:
                 actor_loss, critic_loss = agent.train_model()
                 actor_losses.append(actor_loss)
                 critic_losses.append(critic_loss)
 
-        if done:
+        if done[0]:
             episode +=1
             scores.append(score)
             score = 0
