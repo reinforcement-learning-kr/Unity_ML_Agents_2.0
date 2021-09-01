@@ -11,7 +11,7 @@ from mlagents_envs.side_channel.engine_configuration_channel\
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 #파라미터 값 세팅 
-state_size = 30 * 2
+state_size = 34 * 2
 action_size = 5 
 
 load_model = False
@@ -118,7 +118,8 @@ class PPOAgent:
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
             adv = adv.view(-1, 1)
-            # adv = (adv - adv.mean()) / (adv.std() + 1e-7)
+            adv = (adv - adv.mean()) / (adv.std() + 1e-7)
+            # adv = adv / (adv.std() + 1e-7)
             
             ret = adv + value
 
