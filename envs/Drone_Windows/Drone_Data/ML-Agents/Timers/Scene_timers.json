@@ -1,1 +1,104 @@
-{"count":1,"self":33.2277408,"total":157.65931469999998,"children":{"InitializeActuators":{"count":1,"self":0.0019944999999999997,"total":0.0019944999999999997,"children":null},"InitializeSensors":{"count":1,"self":0.0019675,"total":0.0019675,"children":null},"AgentSendState":{"count":87222,"self":0.1166015,"total":0.5196195,"children":{"CollectObservations":{"count":17445,"self":0.018660299999999998,"total":0.018660299999999998,"children":null},"WriteActionMask":{"count":17445,"self":0.0078543,"total":0.0078543,"children":null},"RequestDecision":{"count":17445,"self":0.0338105,"total":0.3765034,"children":{"AgentInfo.ToProto":{"count":17445,"self":0.0459843,"total":0.34269289999999997,"children":{"GenerateSensorData":{"count":17445,"self":0.2967086,"total":0.2967086,"children":null}}}}}}},"DecideAction":{"count":87222,"self":123.769792,"total":123.76978709999999,"children":null},"AgentAct":{"count":87222,"self":0.1283856,"total":0.1362112,"children":{"AgentInfo.ToProto":{"count":519,"self":0.00094639999999999991,"total":0.0078256,"children":{"GenerateSensorData":{"count":519,"self":0.0068791999999999994,"total":0.0068791999999999994,"children":null}}}}}},"gauges":{"My Behavior.CumulativeReward":{"count":519,"max":4.511582,"min":-2.84599924,"runningAverage":-1.55589724,"value":2.05300379,"weightedAverage":1.97437751}},"metadata":{"timer_format_version":"0.1.0","start_time_seconds":"1625695062","unity_version":"2021.2.0a16","command_line_arguments":"D:\\myGits\\Unity_ML_Agents_2.0\\agents\\..\/envs\/Drone_Windows\/Drone.exe --mlagents-port 5005","communication_protocol_version":"1.5.0","com.unity.ml-agents_version":"2.0.0-exp.1","scene_name":"Scene","end_time_seconds":"1625695220"}}
+{
+    "count": 1,
+    "self": 185.2639872,
+    "total": 712.8627857,
+    "children": {
+        "InitializeActuators": {
+            "count": 1,
+            "self": 0.0030007,
+            "total": 0.0030007,
+            "children": null
+        },
+        "InitializeSensors": {
+            "count": 1,
+            "self": 0.002,
+            "total": 0.002,
+            "children": null
+        },
+        "AgentSendState": {
+            "count": 60001,
+            "self": 0.4990271,
+            "total": 2.7420367999999997,
+            "children": {
+                "CollectObservations": {
+                    "count": 60001,
+                    "self": 0.1618839,
+                    "total": 0.1618839,
+                    "children": null
+                },
+                "WriteActionMask": {
+                    "count": 60001,
+                    "self": 0.0748528,
+                    "total": 0.0748528,
+                    "children": null
+                },
+                "RequestDecision": {
+                    "count": 60001,
+                    "self": 0.2348186,
+                    "total": 2.0062729999999998,
+                    "children": {
+                        "AgentInfo.ToProto": {
+                            "count": 60001,
+                            "self": 0.3309545,
+                            "total": 1.7714543999999999,
+                            "children": {
+                                "GenerateSensorData": {
+                                    "count": 60001,
+                                    "self": 1.4404998999999998,
+                                    "total": 1.4404998999999998,
+                                    "children": null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "DecideAction": {
+            "count": 60001,
+            "self": 524.59161599999993,
+            "total": 524.59159979999993,
+            "children": null
+        },
+        "AgentAct": {
+            "count": 60001,
+            "self": 0.2332078,
+            "total": 0.2581681,
+            "children": {
+                "AgentInfo.ToProto": {
+                    "count": 1099,
+                    "self": 0.00097529999999999991,
+                    "total": 0.024960299999999998,
+                    "children": {
+                        "GenerateSensorData": {
+                            "count": 1099,
+                            "self": 0.023985,
+                            "total": 0.023985,
+                            "children": null
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "gauges": {
+        "My Behavior.CumulativeReward": {
+            "count": 1099,
+            "max": 8.819275,
+            "min": -10.131381,
+            "runningAverage": 3.72984624,
+            "value": 5.32792759,
+            "weightedAverage": 4.74746752
+        }
+    },
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1625842605",
+        "unity_version": "2021.1.6f1",
+        "command_line_arguments": "D:\\dev\\unitymlagents\\Unity_ML_Agents_2.0\\agents\\..\/envs\/Drone_Windows\/Drone.exe --mlagents-port 5005",
+        "communication_protocol_version": "1.5.0",
+        "com.unity.ml-agents_version": "2.0.0-exp.1",
+        "scene_name": "Scene",
+        "end_time_seconds": "1625843318"
+    }
+}
