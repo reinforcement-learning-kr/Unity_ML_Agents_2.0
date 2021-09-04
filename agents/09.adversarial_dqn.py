@@ -13,7 +13,7 @@ from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 
 # Adversarial DQN을 위한 파라미터 값 세팅 
-state_size = 8
+state_size = 6
 action_size = 3
 
 load_model = False
