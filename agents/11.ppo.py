@@ -20,7 +20,7 @@ train_mode = True
 discount_factor = 0.9
 learning_rate = 2.5e-4
 n_step = 128
-batch_size = 32
+batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.1
@@ -64,6 +64,7 @@ class ActorCritic(torch.nn.Module):
         self.v = torch.nn.Linear(128, 1)
 
     def forward(self, x):
+        print(x.shape)
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
         return F.softmax(self.pi(x), dim=1), self.v(x)
@@ -187,7 +188,7 @@ if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
     environment_parameters_channel = EnvironmentParametersChannel()
-    env = UnityEnvironment(file_name=env_name,
+    env = UnityEnvironment(file_name=None,
                            side_channels=[engine_configuration_channel,
                                           environment_parameters_channel])
     env.reset()
@@ -195,7 +196,7 @@ if __name__ == '__main__':
     # 유니티 브레인 설정
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
-    engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
+    engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
     for key, value in env_config.items():
         environment_parameters_channel.set_float_parameter(key, value)
     dec, term = env.get_steps(behavior_name)
