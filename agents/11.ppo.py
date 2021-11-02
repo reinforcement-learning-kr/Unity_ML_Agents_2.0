@@ -17,23 +17,23 @@ action_size = 5
 load_model = False
 train_mode = True
 
-discount_factor = 0.9
-learning_rate = 2.5e-4
+discount_factor = 0.99
+learning_rate = 3e-4
 n_step = 128
-batch_size = 512
+batch_size = 256
 n_epoch = 3
 _lambda = 0.95
-epsilon = 0.1
+epsilon = 0.2
 clip_grad_norm = 1
 
-run_step = 500000 if train_mode else 0
-test_step = 50000
+run_step = 200000 if train_mode else 0
+test_step = 100000
 
 print_interval = 10
 save_interval = 100
 
 # 닷지 환경 설정 ()
-env_config = {"ballSpeed": 3, "ballNums": 10,
+env_config = {"ballSpeed": 2, "ballNums": 15,
               "ballRandom": 0.2, "randomSeed": 77, "agentSpeed": 30}
 
 # 유니티 환경 경로
@@ -47,7 +47,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/PPO/{date_time}"
-load_path = f"./saved_models/{game}/PPO/20210827221933"
+load_path = f"./saved_models/{game}/PPO/20211024110824"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -67,7 +67,7 @@ class ActorCritic(torch.nn.Module):
         print(x.shape)
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
-        return F.softmax(self.pi(x), dim=1), self.v(x)
+        return F.softmax(self.pi(x), dim=-1), self.v(x)
 
 # PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의
 
@@ -122,13 +122,11 @@ class PPOAgent:
             delta = reward + (1 - done) * discount_factor * next_value - value
             adv = delta.clone()
             adv, done = map(lambda x: x.view(
-                n_step, -1).transpose(1, 0).contiguous(), [adv, done])
+                n_step, -1).transpose(0, 1).contiguous(), [adv, done])
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * \
                     discount_factor * _lambda * adv[:, t+1]
-            adv = adv.view(-1, 1)
-            adv = (adv - adv.mean()) / (adv.std() + 1e-7)
-            # adv = adv / (adv.std() + 1e-7)
+            adv = adv.transpose(0, 1).contiguous().view(-1, 1)
 
             ret = adv + value
 
