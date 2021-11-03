@@ -64,6 +64,7 @@ class ActorCritic(torch.nn.Module):
         self.v = torch.nn.Linear(128, 1)
 
     def forward(self, x):
+        print(x.shape)
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
@@ -185,7 +186,7 @@ if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
     environment_parameters_channel = EnvironmentParametersChannel()
-    env = UnityEnvironment(file_name=env_name,
+    env = UnityEnvironment(file_name=None,
                            side_channels=[engine_configuration_channel,
                                           environment_parameters_channel])
     env.reset()

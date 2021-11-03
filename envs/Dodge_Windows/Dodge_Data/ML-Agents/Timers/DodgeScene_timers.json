@@ -1,1 +1,104 @@
-{"count":1,"self":10.8154848,"total":440.2107996,"children":{"InitializeActuators":{"count":8,"self":0.0019936999999999997,"total":0.0019936999999999997,"children":null},"InitializeSensors":{"count":8,"self":0.0020264,"total":0.0020264,"children":null},"AgentSendState":{"count":30112,"self":0.40981999999999996,"total":13.3063211,"children":{"CollectObservations":{"count":240896,"self":9.012648,"total":9.0126479,"children":null},"WriteActionMask":{"count":240896,"self":0.0921259,"total":0.0921259,"children":null},"RequestDecision":{"count":240896,"self":0.2289067,"total":3.7917273,"children":{"AgentInfo.ToProto":{"count":240896,"self":0.4086296,"total":3.5628206,"children":{"GenerateSensorData":{"count":240896,"self":3.154191,"total":3.154191,"children":null}}}}}}},"DecideAction":{"count":30112,"self":413.203968,"total":413.20397579999997,"children":null},"AgentAct":{"count":30112,"self":2.7782296,"total":2.8800268,"children":{"AgentInfo.ToProto":{"count":3477,"self":0.0099221,"total":0.1017971,"children":{"GenerateSensorData":{"count":3477,"self":0.091875,"total":0.091875,"children":null}}}}}},"gauges":{"My Behavior.CumulativeReward":{"count":3477,"max":18.8290977,"min":-1,"runningAverage":3.858067,"value":8.329683,"weightedAverage":3.94516373}},"metadata":{"timer_format_version":"0.1.0","start_time_seconds":"1635953364","unity_version":"2021.1.6f1","command_line_arguments":"D:\\myGits\\Unity_ML_Agents_2.0\\agents\\..\/envs\/Dodge_Windows\/Dodge.exe --mlagents-port 5005","communication_protocol_version":"1.5.0","com.unity.ml-agents_version":"2.0.0-exp.1","scene_name":"DodgeScene","end_time_seconds":"1635953804"}}
+{
+    "count": 1,
+    "self": 1.0179988,
+    "total": 14.565954,
+    "children": {
+        "InitializeActuators": {
+            "count": 8,
+            "self": 0.0019706,
+            "total": 0.0019706,
+            "children": null
+        },
+        "InitializeSensors": {
+            "count": 8,
+            "self": 0.0019944999999999997,
+            "total": 0.0019944999999999997,
+            "children": null
+        },
+        "AgentSendState": {
+            "count": 1069,
+            "self": 0.013881,
+            "total": 0.4067113,
+            "children": {
+                "CollectObservations": {
+                    "count": 8552,
+                    "self": 0.2571777,
+                    "total": 0.2571777,
+                    "children": null
+                },
+                "WriteActionMask": {
+                    "count": 8552,
+                    "self": 0.0019790999999999997,
+                    "total": 0.0019790999999999997,
+                    "children": null
+                },
+                "RequestDecision": {
+                    "count": 8552,
+                    "self": 0.016045,
+                    "total": 0.1336735,
+                    "children": {
+                        "AgentInfo.ToProto": {
+                            "count": 8552,
+                            "self": 0.0121446,
+                            "total": 0.1176285,
+                            "children": {
+                                "GenerateSensorData": {
+                                    "count": 8552,
+                                    "self": 0.10548389999999999,
+                                    "total": 0.10548389999999999,
+                                    "children": null
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "DecideAction": {
+            "count": 1069,
+            "self": 13.0544976,
+            "total": 13.054497999999999,
+            "children": null
+        },
+        "AgentAct": {
+            "count": 1069,
+            "self": 0.0798147,
+            "total": 0.081788,
+            "children": {
+                "AgentInfo.ToProto": {
+                    "count": 132,
+                    "self": 0.0009972,
+                    "total": 0.0019733,
+                    "children": {
+                        "GenerateSensorData": {
+                            "count": 132,
+                            "self": 0.00097609999999999993,
+                            "total": 0.00097609999999999993,
+                            "children": null
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "gauges": {
+        "My Behavior.CumulativeReward": {
+            "count": 132,
+            "max": 13.398694,
+            "min": -1,
+            "runningAverage": 3.30802727,
+            "value": 1.10000014,
+            "weightedAverage": 2.04396915
+        }
+    },
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1635573627",
+        "unity_version": "2021.1.6f1",
+        "command_line_arguments": "D:\\myGits\\Unity_ML_Agents_2.0\\agents\\..\/envs\/Dodge_Windows\/Dodge.exe --mlagents-port 5005",
+        "communication_protocol_version": "1.5.0",
+        "com.unity.ml-agents_version": "2.0.0-exp.1",
+        "scene_name": "DodgeScene",
+        "end_time_seconds": "1635573641"
+    }
+}
