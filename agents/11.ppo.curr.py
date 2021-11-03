@@ -2,6 +2,7 @@
 import numpy as np
 import datetime
 import platform
+import os
 import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
@@ -13,8 +14,7 @@ from mlagents_envs.side_channel.environment_parameters_channel\
 
 """
 TODO : 
-1. save the model when the level of curriculum has been changed
-2. clear the agent's memory?
+1. load the model from the given game level which is parameterized (functionization)
 
 """
 
@@ -34,8 +34,8 @@ _lambda = 0.95
 epsilon = 0.2
 clip_grad_norm = 1
 
-run_step = 3000 if train_mode else 0
-test_step = 10000
+run_step = 30000 if train_mode else 0
+test_step = 100
 
 print_interval = 10
 save_interval = 100
@@ -51,7 +51,7 @@ dodge_reset_parameters = \
 
 curriculum_config = \
     {
-        'next_threshold_step': [1000, 2000, 3000],
+        'next_threshold_step': [10000, 20000, 30000],
         'game_level': [0, 1, 2]
     }
 
@@ -98,8 +98,8 @@ class PPOAgent:
         self.writer = SummaryWriter(save_path)
 
         if load_model == True:
-            print(f"... Load Model from {load_path}/ckpt ...")
-            checkpoint = torch.load(load_path+'/ckpt', map_location=device)
+            print(f"... Load Model from {load_path}/0_ckpt ...")
+            checkpoint = torch.load(load_path+'/0_ckpt', map_location=device)
             self.network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
 
@@ -184,18 +184,18 @@ class PPOAgent:
         return np.mean(actor_losses), np.mean(critic_losses)
 
     # 네트워크 모델 저장
-    def save_model(self):
-        print(f"... Save Model to {save_path}/ckpt ...")
+    def save_model(self, level):
+        print(f"... Save Model to {save_path}/{str(level)}_ckpt ...")
         torch.save({
             "network": self.network.state_dict(),
             "optimizer": self.optimizer.state_dict(),
-        }, save_path+'/ckpt')
+        }, save_path+ '/' + str(level) + '_ckpt')
 
         # 학습 기록
-    def write_summray(self, score, actor_loss, critic_loss, step):
-        self.writer.add_scalar("run/score", score, step)
-        self.writer.add_scalar("model/actor_loss", actor_loss, step)
-        self.writer.add_scalar("model/critic_loss", critic_loss, step)
+    def write_summray(self, score, actor_loss, critic_loss, step, level):
+        self.writer.add_scalar("level " + str(level) + "/score", score, step)
+        self.writer.add_scalar("level " + str(level) + "/actor_loss", actor_loss, step)
+        self.writer.add_scalar("level " + str(level) + "/critic_loss", critic_loss, step)
 
 
 # Main 함수 -> 전체적으로 PPO 알고리즘을 진행
@@ -231,7 +231,7 @@ if __name__ == '__main__':
     for step in range(run_step + test_step):
         if step == run_step:
             if train_mode:
-                agent.save_model()
+                agent.save_model(game_level)
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(
@@ -278,7 +278,7 @@ if __name__ == '__main__':
                 mean_critic_loss = np.mean(critic_losses) if len(
                     critic_losses) > 0 else 0
                 agent.write_summray(
-                    mean_score, mean_actor_loss, mean_critic_loss, step)
+                    mean_score, mean_actor_loss, mean_critic_loss, step, game_level)
                 actor_losses, critic_losses, scores = [], [], []
 
                 print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +
@@ -286,7 +286,7 @@ if __name__ == '__main__':
 
             # 네트워크 모델 저장
             if train_mode and episode % save_interval == 0:
-                agent.save_model()
+                agent.save_model(game_level)
 
         if train_mode == True and step >= curriculum_config['next_threshold_step'][curriculum_num]:
             
@@ -298,5 +298,8 @@ if __name__ == '__main__':
 
             for key, value in dodge_reset_parameters[game_level].items():
                 environment_parameters_channel.set_float_parameter(key, value)
+
+            dec, term = env.get_steps(behavior_name)
+            actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
 
     env.close()
