@@ -7,16 +7,8 @@ import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
-from mlagents_envs.side_channel.engine_configuration_channel\
-    import EngineConfigurationChannel
-from mlagents_envs.side_channel.environment_parameters_channel\
-    import EnvironmentParametersChannel
-
-"""
-TODO : 
-1. load the model from the given game level which is parameterized (functionization)
-
-"""
+from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
+from mlagents_envs.side_channel.environment_parameters_channel import EnvironmentParametersChannel
 
 # 파라미터 값 세팅
 state_size = 34 * 2
@@ -40,7 +32,7 @@ test_step = 100
 print_interval = 10
 save_interval = 100
 
-curriculum_num = 0
+curriculum_level = 0
 
 dodge_reset_parameters = \
     [
@@ -51,8 +43,7 @@ dodge_reset_parameters = \
 
 curriculum_config = \
     {
-        'next_threshold_step': [10000, 20000, 30000],
-        'game_level': [0, 1, 2]
+        'next_threshold_step': [10000, 20000, 30000]
     }
 
 # 유니티 환경 경로
@@ -71,7 +62,6 @@ load_path = f"./saved_models/{game}/PPO/20211024110824"
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
 # ActorCritic 클래스 -> Actor Network, Critic Network 정의
 class ActorCritic(torch.nn.Module):
     def __init__(self, **kwargs):
@@ -87,8 +77,6 @@ class ActorCritic(torch.nn.Module):
         return F.softmax(self.pi(x), dim=-1), self.v(x)
 
 # PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의
-
-
 class PPOAgent:
     def __init__(self):
         self.network = ActorCritic().to(device)
@@ -98,8 +86,10 @@ class PPOAgent:
         self.writer = SummaryWriter(save_path)
 
         if load_model == True:
-            print(f"... Load Model from {load_path}/0_ckpt ...")
-            checkpoint = torch.load(load_path+'/0_ckpt', map_location=device)
+            # 제일 마지막 curriculum level 모델 불러오기
+            latest_idx = len(dodge_reset_parameters) - 1
+            print(f"... Load Model from {load_path}/" + latest_idx + "_ckpt...")
+            checkpoint = torch.load(load_path + '/' + latest_idx + '_ckpt', map_location=device)
             self.network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
 
@@ -128,8 +118,7 @@ class PPOAgent:
         done = np.stack([m[4] for m in self.memory], axis=0)
         self.memory.clear()
 
-        state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
-                                                      [state, action, reward, next_state, done])
+        state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device), [state, action, reward, next_state, done])
         # pi_old, advantage 계산
         with torch.no_grad():
             pi_old, value = self.network(state)
@@ -214,10 +203,9 @@ if __name__ == '__main__':
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
 
     # reset curriculum
-    game_level = curriculum_config['game_level'][curriculum_num]
-    next_threshold_step = curriculum_config['next_threshold_step'][curriculum_num]
+    next_threshold_step = curriculum_config['next_threshold_step'][curriculum_level]
 
-    for key, value in dodge_reset_parameters[game_level].items():
+    for key, value in dodge_reset_parameters[curriculum_level].items():
         environment_parameters_channel.set_float_parameter(key, value)
 
     # for key, value in env_config.items():
@@ -231,7 +219,7 @@ if __name__ == '__main__':
     for step in range(run_step + test_step):
         if step == run_step:
             if train_mode:
-                agent.save_model(game_level)
+                agent.save_model(curriculum_level)
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(
@@ -278,7 +266,7 @@ if __name__ == '__main__':
                 mean_critic_loss = np.mean(critic_losses) if len(
                     critic_losses) > 0 else 0
                 agent.write_summray(
-                    mean_score, mean_actor_loss, mean_critic_loss, step, game_level)
+                    mean_score, mean_actor_loss, mean_critic_loss, step, curriculum_level)
                 actor_losses, critic_losses, scores = [], [], []
 
                 print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +
@@ -286,17 +274,16 @@ if __name__ == '__main__':
 
             # 네트워크 모델 저장
             if train_mode and episode % save_interval == 0:
-                agent.save_model(game_level)
+                agent.save_model(curriculum_level)
 
-        if train_mode == True and step >= curriculum_config['next_threshold_step'][curriculum_num]:
-            
-            curriculum_num += 1
-            print(f"the level has been increased --> {curriculum_config['game_level'][curriculum_num]}")
-            game_level = curriculum_config['game_level'][curriculum_num]
+        # curriculum_config에서 명시했던 스텝이 지나면 curriculum level 증가
+        if train_mode == True and step >= curriculum_config['next_threshold_step'][curriculum_level]:           
+            curriculum_level += 1
+            print(f"the level has been increased --> {curriculum_level}")
 
             env.reset()
 
-            for key, value in dodge_reset_parameters[game_level].items():
+            for key, value in dodge_reset_parameters[curriculum_level].items():
                 environment_parameters_channel.set_float_parameter(key, value)
 
             dec, term = env.get_steps(behavior_name)
