@@ -1,7 +1,7 @@
 # Unity_ML_Agents_2.0
 
 ## Prerequisites
-python 3.7
+python 3.8
 
 ## Usage
 ```cmd
