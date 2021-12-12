@@ -1,3 +1,5 @@
-**/saved_models/
-**/_dev/
-**/.vscode/
+saved_models/
+_dev/
+.vscode/
+
+*_timers.json
