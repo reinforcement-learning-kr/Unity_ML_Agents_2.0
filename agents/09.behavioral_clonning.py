@@ -28,7 +28,7 @@ print_interval = 10
 save_interval = 100
 
 # 유니티 환경 경로
-game = "Racing"
+game = "Kart"
 os_name = platform.system()
 if os_name == 'Windows':
     env_name = f"../envs/{game}_{os_name}/{game}"
@@ -52,12 +52,12 @@ class Actor(torch.nn.Module):
         super(Actor, self).__init__()
         self.fc1 = torch.nn.Linear(state_size, 128)
         self.fc2 = torch.nn.Linear(128, 128)
-        self.action = torch.nn.Linear(128, action_size)
+        self.mu = torch.nn.Linear(128, action_size)
         
     def forward(self, state):
         x = torch.relu(self.fc1(state))
         x = torch.relu(self.fc2(x))
-        return torch.tanh(self.action(x))
+        return torch.tanh(self.mu(x))
 
 # BCAgent 클래스 -> Behavioral Cloning 알고리즘을 위한 다양한 함수 정의
 class BCAgent():
