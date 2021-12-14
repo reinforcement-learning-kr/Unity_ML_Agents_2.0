@@ -98,7 +98,6 @@ class BCAgent():
         
         return np.mean(losses)
         
-        
     # 네트워크 모델 저장
     def save_model(self):
         print(f"... Save Model to {save_path}/ckpt ...")
@@ -141,6 +140,7 @@ if __name__ == '__main__':
             agent.write_summray(loss, epoch)
             losses.append(loss)
             
+            # 텐서 보드에 손실함수 값 기록
             if epoch % print_interval == 0:
                 mean_loss = np.mean(losses)
                 print(f"{epoch} Epoch / Loss: {mean_loss:.8f}" )
@@ -150,8 +150,7 @@ if __name__ == '__main__':
             if epoch % save_interval == 0:
                 agent.save_model()
                 
-
-    # 실제 환경에서 Play 
+    # 빌드 환경에서 Play 시작
     print("PLAY START")
 
     # 유니티 환경 경로 설정 (file_name)
@@ -166,9 +165,9 @@ if __name__ == '__main__':
     engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
     dec, term = env.get_steps(behavior_name)
     
+    # TEST 시작
     scores, episode, score = [], 0, 0
     for step in range(test_step):
-
         state = dec.obs[0]
         action = agent.get_action(state, False)
         action_tuple = ActionTuple()
@@ -187,7 +186,7 @@ if __name__ == '__main__':
             scores.append(score)
             score = 0
 
-            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록
+            # 게임 진행 상황 출력
             if episode % print_interval == 0:
                 mean_score = np.mean(scores)
                 print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} ")
