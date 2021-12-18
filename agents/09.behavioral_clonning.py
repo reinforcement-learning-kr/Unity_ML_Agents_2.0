@@ -117,8 +117,7 @@ if __name__ == '__main__':
     
     if train_mode:
         # Demonstration 정보 가져오기
-        brain_params, demo_buffer = demo_to_buffer(demo_path,1)
-        print("Brain Params", brain_params)
+        behavior_spec, demo_buffer = demo_to_buffer(demo_path, 1)
         print(demo_buffer._fields.keys())
         
         demo_to_tensor = lambda key: torch.FloatTensor(demo_buffer[key]).to(device)
