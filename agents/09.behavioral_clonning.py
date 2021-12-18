@@ -38,7 +38,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/BC/{date_time}"
-load_path = f"./saved_models/{game}/BC/20211128183733"
+load_path = f"./saved_models/{game}/BC/20211218163225"
 
 # Demonstration 경로
 demo_path = "../demo/KartAgent.demo"
@@ -79,8 +79,8 @@ class BCAgent():
         action = self.actor(torch.FloatTensor(state).to(device)).cpu().detach().numpy()
         return action
     
+    # 학습 수행
     def train_model(self, state, action):
-        self.actor.train(True)
         losses = []
         
         rand_idx = torch.randperm(len(state))
