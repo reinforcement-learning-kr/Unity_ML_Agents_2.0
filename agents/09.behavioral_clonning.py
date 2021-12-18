@@ -164,7 +164,7 @@ if __name__ == '__main__':
     dec, term = env.get_steps(behavior_name)
     
     # TEST 시작
-    scores, episode, score = [], 0, 0
+    episode, score = 0, 0
     for step in range(test_step):
         state = dec.obs[0]
         action = agent.get_action(state, False)
@@ -181,12 +181,9 @@ if __name__ == '__main__':
 
         if done:
             episode += 1
-            scores.append(score)
-            score = 0
 
             # 게임 진행 상황 출력
-            if episode % print_interval == 0:
-                mean_score = np.mean(scores)
-                print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} ")
+            print(f"{episode} Episode / Step: {step} / Score: {score:.2f} ")
+            score = 0
 
     env.close()
