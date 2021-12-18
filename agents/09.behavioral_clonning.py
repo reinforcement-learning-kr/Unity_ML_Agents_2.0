@@ -136,7 +136,6 @@ if __name__ == '__main__':
         losses = []
         for epoch in range(1, train_epoch+1):
             loss = agent.train_model(state, action)
-            agent.write_summray(loss, epoch)
             losses.append(loss)
             
             # 텐서 보드에 손실함수 값 기록
