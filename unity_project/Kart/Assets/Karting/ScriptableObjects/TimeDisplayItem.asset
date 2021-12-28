@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f467b749fe1b74c2f9afa040e490fa0f, type: 3}
+  m_Name: TimeDisplayItem
+  m_EditorClassIdentifier: 
+  defaultSpawnCount: 5
+  makeExtraCount: 3
+  returnToParentToReuse: 1
+  poolObject: {fileID: 1040317841962324981, guid: e5b44eea871016048be2b9ce5142991d,
+    type: 3}

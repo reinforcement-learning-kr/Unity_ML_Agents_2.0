@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f107dc6d4c984c45bdafd3bb15f98f0, type: 3}
+  m_Name: 4 Add a Jump
+  m_EditorClassIdentifier: 
+  TutorialTitle:
+    m_Untranslated: Add a jump
+  m_TutorialTitle: 
+  m_LessonId: 47145
+  m_Version: 0
+  m_Scene: {fileID: 102900000, guid: 92786e23da2af4a4f8803aaf44c47121, type: 3}
+  m_DefaultSceneCameraSettings:
+    m_CameraMode: 0
+    m_FocusMode: 0
+    m_Orthographic: 0
+    m_Size: 0
+    m_Pivot: {x: 0, y: 0, z: 0}
+    m_Rotation: {x: 0, y: 0, z: 0, w: 0}
+    m_FrameObject:
+      m_SceneGuid: 
+      m_GameObjectGuid: 
+      m_SerializedComponentType:
+        m_TypeName: 
+      m_ComponentIndex: 0
+      m_AssetObject: {fileID: 0}
+      m_Prefab: {fileID: 0}
+    m_Enabled: 0
+  m_ExitBehavior: 1
+  m_SkipTutorialBehavior: 0
+  m_AssetSelectedOnExit: {fileID: 11400000, guid: 08f5116c6f71aa548a00fbd1f56fa92e,
+    type: 2}
+  m_WelcomePage: {fileID: 0}
+  m_CompletedPage: {fileID: 0}
+  m_WindowLayout: {fileID: 102900000, guid: 6867af4bcb42c4e8bb795333f6f1eec7, type: 3}
+  m_Pages:
+    m_Items:
+    - {fileID: 11400000, guid: a3c0acd3a97a8464ea283a617b2bb20c, type: 2}
+    - {fileID: 11400000, guid: be261f07c71d3462bbf00524e82591ad, type: 2}
+    - {fileID: 11400000, guid: fb1142c575fff4f0abbd81cfa7064e2c, type: 2}
+    - {fileID: 11400000, guid: 9e40b27755e7c417bb209bc003d8b464, type: 2}
+    - {fileID: 11400000, guid: 423bbef88c09e457caf11e626b5039fa, type: 2}
+    - {fileID: 11400000, guid: f7b1836921553457a85206d04cf113c7, type: 2}
+    - {fileID: 11400000, guid: 426c2ecafb50d45939c113b173a202a3, type: 2}

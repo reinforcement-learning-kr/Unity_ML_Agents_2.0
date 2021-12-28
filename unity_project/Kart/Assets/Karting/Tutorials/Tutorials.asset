@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89305aa391d1c5141bbe1628d930a2c5, type: 3}
+  m_Name: Tutorials
+  m_EditorClassIdentifier: 
+  HeaderBackground: {fileID: 2800000, guid: 1c7aa536c503744ffafe54d893a5816b, type: 3}
+  Title:
+    m_Untranslated: TUTORIALS
+  ProjectName:
+    m_Untranslated: Karting
+  Description:
+    m_Untranslated: 
+  ProjectLayout: {fileID: 102900000, guid: 7a55d28f119eb4bb2a019158b480027a, type: 3}
+  Sections:
+  - OrderInView: 0
+    Heading:
+      m_Untranslated: Get started
+    Text:
+      m_Untranslated: Playtest the game and increase the speed of your kart
+    LinkText: 
+    Url: 
+    AuthorizedUrl: 0
+    Image: {fileID: 2800000, guid: 87e82d8dd40994ee58d1b317c145b92f, type: 3}
+    Tutorial: {fileID: 11400000, guid: 92d21b44a68004daebe1f6c4e03b487a, type: 2}
+  - OrderInView: 2
+    Heading:
+      m_Untranslated: Editor basics
+    Text:
+      m_Untranslated: Learn the basic views, windows, and tools of the Unity Editor
+    LinkText: 
+    Url: 
+    AuthorizedUrl: 0
+    Image: {fileID: 2800000, guid: a77faddc74a5a452e8ae1a65ef7e92c7, type: 3}
+    Tutorial: {fileID: 11400000, guid: ef019b20e49b14cfca4e98ecf5fd345d, type: 2}
+  - OrderInView: 4
+    Heading:
+      m_Untranslated: Change colors
+    Text:
+      m_Untranslated: Change the color of a GameObject
+    LinkText: 
+    Url: 
+    AuthorizedUrl: 0
+    Image: {fileID: 2800000, guid: 89020edcc6615404493802900ed04b05, type: 3}
+    Tutorial: {fileID: 11400000, guid: 83255933b1f9a13428ca582620d979c8, type: 2}
+  - OrderInView: 6
+    Heading:
+      m_Untranslated: Add a jump
+    Text:
+      m_Untranslated: Add a jump to increase the challenge
+    LinkText: 
+    Url: 
+    AuthorizedUrl: 0
+    Image: {fileID: 2800000, guid: cb88a5233232f48b6a3145ff433696a6, type: 3}
+    Tutorial: {fileID: 11400000, guid: 351b553575cb34b12945f5996095329d, type: 2}
+  - OrderInView: 8
+    Heading:
+      m_Untranslated: Supercharge your game
+    Text:
+      m_Untranslated: Discover a world of assets to enhance and personalize your
+        game
+    LinkText: Asset Store
+    Url: https://assetstore.unity.com/microgame-add-ons/karting
+    AuthorizedUrl: 0
+    Image: {fileID: 2800000, guid: 64234be53c8614d4d9b50bec3f9d516f, type: 3}
+    Tutorial: {fileID: 0}
+  - OrderInView: 10
+    Heading:
+      m_Untranslated: Microgame Mods
+    Text:
+      m_Untranslated: Add self-driving karts, design your own levels, change the
+        game mode, and more
+    LinkText: asd
+    Url: https://learn.unity.com/project/karting-template?courseId=5c59cf22edbc2a001f59aa5d
+    AuthorizedUrl: 0
+    Image: {fileID: 2800000, guid: caa22bb026fa84979ba1be2779739367, type: 3}
+    Tutorial: {fileID: 0}
+  - OrderInView: 12
+    Heading:
+      m_Untranslated: Build, publish, & BONUS
+    Text:
+      m_Untranslated: Create a shareable web game and unlock bonus assets!
+    LinkText: 
+    Url: 
+    AuthorizedUrl: 0
+    Image: {fileID: 2800000, guid: 5ab95756baccd446898f557557202c2b, type: 3}
+    Tutorial: {fileID: 11400000, guid: c122a1a2efeb58349b8154e42481067b, type: 2}

@@ -1,0 +1,173 @@
+fileFormatVersion: 2
+guid: 379c82acbb20c4747b42575fb9e5011e
+ModelImporter:
+  serializedVersion: 23
+  fileIDToRecycleName:
+    100000: Kart_Body
+    100002: //RootNode
+    100004: KartBase
+    100006: KartEngine
+    100008: KartEngineEND
+    100010: KartFrontWheelLeft
+    100012: KartFrontWheelRight
+    100014: KartRearWheels
+    100016: KartSilencer
+    100018: KartSilencerEND
+    100020: KartSteer
+    100022: Root
+    100024: ControllerFrontWheel_Left
+    100026: ControllerFrontWheel_Right
+    100028: ControllerRearWheels
+    100030: Controllers
+    400000: Kart_Body
+    400002: //RootNode
+    400004: KartBase
+    400006: KartEngine
+    400008: KartEngineEND
+    400010: KartFrontWheelLeft
+    400012: KartFrontWheelRight
+    400014: KartRearWheels
+    400016: KartSilencer
+    400018: KartSilencerEND
+    400020: KartSteer
+    400022: Root
+    400024: ControllerFrontWheel_Left
+    400026: ControllerFrontWheel_Right
+    400028: ControllerRearWheels
+    400030: Controllers
+    2100000: KartRacerMaterial
+    2100002: lambert1
+    2300000: ControllerFrontWheel_Left
+    2300002: ControllerFrontWheel_Right
+    2300004: ControllerRearWheels
+    3300000: ControllerFrontWheel_Left
+    3300002: ControllerFrontWheel_Right
+    3300004: ControllerRearWheels
+    4300000: Kart_Body
+    4300002: ControllerRearWheels
+    4300004: ControllerFrontWheel_Right
+    4300006: ControllerFrontWheel_Left
+    7400000: KartIdle
+    9500000: //RootNode
+    13700000: Kart_Body
+    2186277476908879412: ImportLogs
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: KartRacerMaterial
+    second: {fileID: 2100000, guid: 5304db1f3e113764fae919908740f4ba, type: 2}
+  materials:
+    importMaterials: 0
+    materialName: 1
+    materialSearch: 2
+    materialLocation: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 0
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations:
+    - serializedVersion: 16
+      name: KartIdle
+      takeName: Take 001
+      firstFrame: 0
+      lastFrame: 200
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    preserveHierarchy: 0
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    previousCalculatedGlobalScale: 0.01
+    hasPreviousCalculatedGlobalScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  importAnimation: 1
+  copyAvatar: 1
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: Root
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {fileID: 9000000, guid: d3aa50a8114db7a4e95c5cb29a283ac4,
+    type: 3}
+  animationType: 2
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

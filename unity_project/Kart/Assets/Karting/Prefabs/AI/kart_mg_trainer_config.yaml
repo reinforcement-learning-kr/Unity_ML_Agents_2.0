@@ -1,0 +1,39 @@
+default:
+    trainer: ppo
+    batch_size: 1024
+    beta: 5.0e-3
+    buffer_size: 10240
+    epsilon: 0.2
+    hidden_units: 128
+    lambd: 0.95
+    learning_rate: 3.0e-4
+    learning_rate_schedule: linear
+    max_steps: 5.0e10
+    memory_size: 256
+    normalize: false
+    num_epoch: 3
+    num_layers: 2
+    time_horizon: 64
+    sequence_length: 64
+    summary_freq: 1000
+    use_recurrent: false
+    vis_encode_type: simple
+    reward_signals:
+        extrinsic:
+            strength: 1.0
+            gamma: 0.99
+
+ArcadeDriver:
+    batch_size: 512
+    learning_rate: 2.0e-4
+
+4x4Driver:
+    beta: 5.0e-4
+    batch_size: 512
+
+MuscleDriver:
+    batch_size: 512
+
+RoadsterDriver:
+    batch_size: 512
+    learning_rate: 2.0e-4
