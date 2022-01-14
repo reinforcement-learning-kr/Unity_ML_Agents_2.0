@@ -1,8 +1,8 @@
 ﻿using KartGame.KartSystems;
 using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
-using Unity.MLAgents.Actuators;
 using UnityEngine;
+using Unity.MLAgents.Actuators;
 using Random = UnityEngine.Random;
 
 namespace KartGame.AI
@@ -35,15 +35,15 @@ namespace KartGame.AI
     /// </summary>
     public class KartAgent : Agent, IInput
     {
-#region Training Modes
+        #region Training Modes
         [Tooltip("Are we training the agent or is the agent production ready?")]
         public AgentMode Mode = AgentMode.Training;
         [Tooltip("What is the initial checkpoint the agent will go to? This value is only for inferencing.")]
         public ushort InitCheckpointIndex;
 
-#endregion
+        #endregion
 
-#region Senses
+        #region Senses
         [Header("Observation Params")]
         [Tooltip("What objects should the raycasts hit and detect?")]
         public LayerMask Mask;
@@ -58,9 +58,9 @@ namespace KartGame.AI
         [Tooltip("Would the agent need a custom transform to be able to raycast and hit the track? " +
             "If not assigned, then the root transform will be used.")]
         public Transform AgentSensorTransform;
-#endregion
+        #endregion
 
-#region Rewards
+        #region Rewards
         [Header("Rewards"), Tooltip("What penatly is given when the agent crashes?")]
         public float HitPenalty = -1f;
         [Tooltip("How much reward is given when the agent successfully passes the checkpoints?")]
@@ -81,12 +81,13 @@ namespace KartGame.AI
         public LayerMask TrackMask;
         [Tooltip("How far should the ray be when casted? For larger karts - this value should be larger too.")]
         public float GroundCastDistance;
-#endregion
+        #endregion
 
-#region Debugging
-        [Header("Debug Option")] [Tooltip("Should we visualize the rays that the agent draws?")]
+        #region Debugging
+        [Header("Debug Option")]
+        [Tooltip("Should we visualize the rays that the agent draws?")]
         public bool ShowRaycasts;
-#endregion
+        #endregion
 
         ArcadeKart m_Kart;
         bool m_Acceleration;
@@ -100,14 +101,15 @@ namespace KartGame.AI
         public float timeBetweenDecisionsAtInference;
         float m_TimeSinceDecision;
 
-        private Vector3 startPos;
-        private Quaternion startRot;
+        Vector3 startPos;
+        Quaternion startRot;
 
-        private int waypoint_passing_count = 0;
+        int way_point_passing_count = 0;
 
         public override void Initialize()
         {
             base.Initialize();
+
             startPos = transform.position;
             startRot = transform.rotation;
 
@@ -132,6 +134,7 @@ namespace KartGame.AI
         {
             if (m_EndEpisode)
             {
+                way_point_passing_count = 0;
                 m_EndEpisode = false;
                 AddReward(m_LastAccumulatedReward);
                 EndEpisode();
@@ -144,7 +147,7 @@ namespace KartGame.AI
             switch (Mode)
             {
                 case AgentMode.Inferencing:
-                    if (ShowRaycasts) 
+                    if (ShowRaycasts)
                         Debug.DrawRay(transform.position, Vector3.down * GroundCastDistance, Color.cyan);
 
                     // We want to place the agent back on the track if the agent happens to launch itself outside of the track.
@@ -157,7 +160,7 @@ namespace KartGame.AI
                         transform.position = checkpoint.position;
                         m_Kart.Rigidbody.velocity = default;
                         m_Steering = 0f;
-						m_Acceleration = m_Brake = false; 
+                        m_Acceleration = m_Brake = false;
                     }
 
                     break;
@@ -166,17 +169,10 @@ namespace KartGame.AI
 
         void OnTriggerEnter(Collider other)
         {
-            var maskedValue = 1 << other.gameObject.layer;
-            var triggered = maskedValue & CheckpointMask;
-
             FindCheckpointIndex(other.gameObject, out var index);
 
-            // Ensure that the agent touched the checkpoint and the new index is greater than the m_CheckpointIndex.
-            if (triggered > 0 && index > m_CheckpointIndex || index == 0 && m_CheckpointIndex == Colliders.Length - 1)
-            {
-                AddReward(PassCheckpointReward);
-                m_CheckpointIndex = index;
-            }
+            AddReward(PassCheckpointReward);
+            m_CheckpointIndex = index;
         }
 
         void FindCheckpointIndex(GameObject obj, out int index)
@@ -187,11 +183,11 @@ namespace KartGame.AI
                 {
                     index = i;
 
-                    waypoint_passing_count++;
+                    way_point_passing_count++;
 
-                    if(waypoint_passing_count >= 13)
+                    if(way_point_passing_count >= 13)
                     {
-                        waypoint_passing_count = 0;
+                        way_point_passing_count = 0;
                         m_EndEpisode = true;
                     }
 
@@ -206,7 +202,7 @@ namespace KartGame.AI
             if (value > 0)
             {
                 return 1;
-            } 
+            }
             if (value < 0)
             {
                 return -1;
@@ -242,7 +238,7 @@ namespace KartGame.AI
                 if (ShowRaycasts)
                 {
                     Debug.DrawRay(AgentSensorTransform.position, xform.forward * current.RayDistance, Color.green);
-                    Debug.DrawRay(AgentSensorTransform.position, xform.forward * current.HitValidationDistance, 
+                    Debug.DrawRay(AgentSensorTransform.position, xform.forward * current.HitValidationDistance,
                         Color.red);
 
                     if (hit && hitInfo.distance < current.HitValidationDistance)
@@ -269,7 +265,6 @@ namespace KartGame.AI
         public override void OnActionReceived(ActionBuffers actionBuffers)
         {
             //base.OnActionReceived(vectorAction);
-
             var vectorAction = actionBuffers.ContinuousActions;
             InterpretDiscreteActions(vectorAction[0]);
 
@@ -292,8 +287,7 @@ namespace KartGame.AI
             switch (Mode)
             {
                 case AgentMode.Training:
-                    m_CheckpointIndex = Random.Range(0, Colliders.Length - 1);
-                    var collider = Colliders[m_CheckpointIndex];
+                    m_CheckpointIndex = 0;
                     transform.localRotation = startRot;
                     transform.position = startPos;
                     m_Kart.Rigidbody.velocity = default;
@@ -306,9 +300,9 @@ namespace KartGame.AI
             }
         }
 
-        void InterpretDiscreteActions(float actions_0)
+        void InterpretDiscreteActions(float action)
         {
-            m_Steering = actions_0;
+            m_Steering = action;
         }
 
         public InputData GenerateInput()
@@ -319,13 +313,6 @@ namespace KartGame.AI
                 Brake = m_Brake,
                 TurnInput = m_Steering
             };
-        }
-
-        public override void Heuristic(in ActionBuffers actionsOut)
-        {
-            var continuousActionsOut = actionsOut.ContinuousActions;
-
-            continuousActionsOut[0] = Input.GetAxis("Horizontal");
         }
 
         void WaitTimeInference(int action)
@@ -346,6 +333,13 @@ namespace KartGame.AI
                     m_TimeSinceDecision += Time.fixedDeltaTime;
                 }
             }
+        }
+
+        public override void Heuristic(in ActionBuffers actionsOut)
+        {
+            var continuousActionsOut = actionsOut.ContinuousActions;
+
+            continuousActionsOut[0] = Input.GetAxis("Horizontal");
         }
     }
 }
