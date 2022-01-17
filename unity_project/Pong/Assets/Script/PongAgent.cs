@@ -65,11 +65,9 @@ public class PongAgent : Agent
     {
         // º»ÀÎ ÁÂÇ¥
         sensor.AddObservation(agentTrans.position.x);
-        sensor.AddObservation(agentTrans.position.z);
 
         // »ó´ë¹æ ÁÂÇ¥
         sensor.AddObservation(OpponentTrans.position.x);
-        sensor.AddObservation(OpponentTrans.position.z);
 
         // BallÀÇ ÁÂÇ¥
         sensor.AddObservation(ballTrans.position.x);
