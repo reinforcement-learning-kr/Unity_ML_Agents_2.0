@@ -312,7 +312,6 @@ namespace KartGame.KartSystems
             // apply vehicle physics
             if (m_CanMove)
             {
-                //MoveVehicle(Input.Accelerate, Input.Brake, Input.TurnInput);
                 MoveVehicle(true, false, Input.TurnInput);
             }
             GroundAirbourne();
