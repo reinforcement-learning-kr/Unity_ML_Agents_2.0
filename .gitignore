@@ -1,5 +1,6 @@
 saved_models/
 _dev/
 .vscode/
+.vs/
 *_timers.json
 Demonstrations/
