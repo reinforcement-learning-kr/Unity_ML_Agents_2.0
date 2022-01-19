@@ -3,3 +3,4 @@ _dev/
 .vscode/
 .vs/
 *_timers.json
+*_timers.json.meta
