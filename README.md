@@ -34,11 +34,9 @@ python **.AGENT.py # 예시: python 04.dqn.py
 
 ### 1. 그리드월드 
 <img src="./resource/GridWorld.gif" alt="Gridworld" width=50%>
-<br/>
 
 ### 2. 드론 
 <img src="./resource/Drone.gif" alt="Drone" width=50%>
-<br/>
 
 ### 3. 카트 레이싱 
 <img src="./resource/KartRacing.gif" alt="KartRacing" width=50%>
