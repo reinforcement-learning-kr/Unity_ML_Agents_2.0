@@ -73,6 +73,8 @@ public class DroneAgent : Agent
         else
         {
             float reward = preDist - distance;
+			if(reward > 0f)
+				reward *= 0.9f;
             SetReward(reward);
             preDist = distance;
         }
