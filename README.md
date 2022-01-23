@@ -20,6 +20,16 @@ cd agents
 python **.AGENT.py # 예시: python 04.dqn.py
 ```
 
+## 디렉토리 구조 설명
+```
+├─ agents           # 에이전트 학습 스크립트 관리
+├─ config           # ml-agents 내장 알고리즘 config.yaml 관리
+├─ demo             # demonstration 관리
+├─ envs             # 환경 빌드 관리
+├─ resrc            # README 이미지 관리
+└─ unity_project    # 환경 유니티 프로젝트 관리
+```
+
 ## 알고리즘 
 모든 알고리즘은 파이썬과 [파이토치](https://pytorch.org/)를 통해 작성되었습니다. 본 강의에서 제공하는 심층강화학습 알고리즘은 다음과 같습니다. 
 
@@ -33,10 +43,10 @@ python **.AGENT.py # 예시: python 04.dqn.py
 모든 환경은 유니티와 유니티 머신러닝 에이전트를 통해 제작되었습니다. 다음과 같은 환경들의 제작 방법에 대해 강의합니다. 각 환경과 해당 환경에 대한 학습 결과는 다음과 같습니다. 
 
 ### 1. 그리드월드 
-<img src="./resource/GridWorld.gif" alt="Gridworld" width=50%>
+<img src="./resrc/GridWorld.gif" alt="Gridworld" width=50%>
 
 ### 2. 드론 
-<img src="./resource/Drone.gif" alt="Drone" width=50%>
+<img src="./resrc/Drone.gif" alt="Drone" width=50%>
 
 ### 3. 카트 레이싱 
-<img src="./resource/KartRacing.gif" alt="KartRacing" width=50%>
+<img src="./resrc/KartRacing.gif" alt="KartRacing" width=50%>
