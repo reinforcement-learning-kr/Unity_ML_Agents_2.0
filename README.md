@@ -25,9 +25,9 @@ python **.AGENT.py # 예시: python 04.dqn.py
 ├─ agents           # 에이전트 학습 스크립트 관리
 ├─ config           # ml-agents 내장 알고리즘 config.yaml 관리
 ├─ demo             # demonstration 관리
-├─ envs             # 환경 빌드 관리
+├─ envs             # 빌드된 환경 관리
 ├─ resrc            # README 이미지 관리
-└─ unity_project    # 환경 유니티 프로젝트 관리
+└─ unity_project    # 환경의 유니티 프로젝트 관리
 ```
 
 ## 알고리즘 
