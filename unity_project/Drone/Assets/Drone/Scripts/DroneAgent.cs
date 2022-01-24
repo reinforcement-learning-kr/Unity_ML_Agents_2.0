@@ -46,8 +46,7 @@ public class DroneAgent : Agent
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
     {
-        AddReward(-0.01f);
-
+		AddReward(-0.01f);
         var actions = actionBuffers.ContinuousActions;
 
         float moveX = Mathf.Clamp(actions[0], -1, 1f);
@@ -67,15 +66,15 @@ public class DroneAgent : Agent
         }
         else if(distance > 10f)
         {
-            SetReward(-1f);
+			SetReward(-1f);
             EndEpisode();
         }
         else
         {
             float reward = preDist - distance;
-			if(reward > 0f)
-				reward *= 0.9f;
-            SetReward(reward);
+			//if (reward > 0f)
+			//	reward *= 0.9f;
+			AddReward(reward);
             preDist = distance;
         }
     }
