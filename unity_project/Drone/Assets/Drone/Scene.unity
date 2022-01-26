@@ -288,7 +288,7 @@ MonoBehaviour:
   MaxStep: 0
   area: {fileID: 825528118}
   goal: {fileID: 974131372}
-  timeBetweenDecisionsAtInference: 0
+  DecisionWaitingTime: 5
 --- !u!114 &873390240
 MonoBehaviour:
   m_ObjectHideFlags: 0

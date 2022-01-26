@@ -19,8 +19,8 @@ load_model = False
 train_mode = True
 
 batch_size = 128
-mem_maxlen = 50000
-discount_factor = 0.99
+mem_maxlen = 30000
+discount_factor = 0.9
 actor_lr = 1e-4
 critic_lr = 5e-4
 tau = 1e-3
