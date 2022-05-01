@@ -167,9 +167,9 @@ class DQNAgent:
 
     # 학습 기록 
     def write_summray(self, score, loss, epsilon, step):
-            self.writer.add_scalar("run/score", score, step)
-            self.writer.add_scalar("model/loss", loss, step)
-            self.writer.add_scalar("model/epsilon", epsilon, step)
+        self.writer.add_scalar("run/score", score, step)
+        self.writer.add_scalar("model/loss", loss, step)
+        self.writer.add_scalar("model/epsilon", epsilon, step)
 
 # Main 함수 -> 전체적으로 DQN 알고리즘을 진행 
 if __name__ == '__main__':
