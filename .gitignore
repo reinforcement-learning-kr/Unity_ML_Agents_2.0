@@ -4,3 +4,4 @@ _dev/
 .vs/
 *_timers.json
 *_timers.json.meta
+.bak/
