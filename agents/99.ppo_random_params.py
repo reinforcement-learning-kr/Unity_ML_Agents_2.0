@@ -14,8 +14,8 @@ from mlagents_envs.side_channel.environment_parameters_channel\
 state_size = 122
 action_size = 5
 
-load_model = True
-train_mode = False
+load_model = False
+train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
