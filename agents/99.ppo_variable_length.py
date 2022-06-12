@@ -61,16 +61,13 @@ class ActorCritic(torch.nn.Module):
         if USE_MHA:
             self.MHA = torch.nn.MultiheadAttention(state_size, 1)
             self.flat = torch.nn.Flatten()
-            self.fc1 = torch.nn.Linear(state_size, 128)
-            self.fc2 = torch.nn.Linear(128, 32)
-            self.pi = torch.nn.Linear(32, action_size)
-            self.v = torch.nn.Linear(32, 1)
-
+            self.d1 = torch.nn.Linear(state_size, 128)
         else:
             self.d1 = torch.nn.Linear(state_size, 128)
-            self.d2 = torch.nn.Linear(128, 128)
-            self.pi = torch.nn.Linear(128, action_size)
-            self.v = torch.nn.Linear(128, 1)
+            
+        self.d2 = torch.nn.Linear(128, 128)
+        self.pi = torch.nn.Linear(128, action_size)
+        self.v = torch.nn.Linear(128, 1)
         
     def forward(self, x):
 
@@ -79,11 +76,10 @@ class ActorCritic(torch.nn.Module):
             x, _ = self.MHA(x, x, x)
             x = self.flat(x)
             x = F.relu(self.fc1(x))
-            x = F.relu(self.fc2(x))
-
         else:
             x = F.relu(self.d1(x))
-            x = F.relu(self.d2(x))
+            
+        x = F.relu(self.d2(x))
 
         return F.softmax(self.pi(x), dim=-1), self.v(x)
 
