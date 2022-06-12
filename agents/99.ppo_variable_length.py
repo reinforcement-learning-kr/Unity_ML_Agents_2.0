@@ -237,9 +237,6 @@ if __name__ == '__main__':
             _id = list(term.agent_id).index(id)
             done[id] = True
             next_state[id] = term.obs[0][_id]
-
-            next_state[id] = next_state[id].reshape((next_state[id].shape[0], 1, next_state[id].shape[1]))
-
             reward[id] = term.reward[_id]
         score += reward[0]
 
