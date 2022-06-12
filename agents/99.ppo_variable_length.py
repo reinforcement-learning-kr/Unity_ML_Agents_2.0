@@ -39,7 +39,7 @@ env_config = {"ballSpeed": 2, "ballNums": 15, "ballRandom": 0.2, "randomSeed": 7
 game = "Dodge"
 os_name = platform.system()
 if os_name == 'Windows':
-    env_name = f"../envs/{game}_{os_name}_vel/{game}"
+    env_name = f"../envs/{game}_{os_name}/{game}"
 elif os_name == 'Darwin':
     env_name = f"../envs/{game}_{os_name}"
 
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
     environment_parameters_channel = EnvironmentParametersChannel()
-    env = UnityEnvironment(file_name=None,
+    env = UnityEnvironment(file_name=env_name,
                            side_channels=[engine_configuration_channel,
                                           environment_parameters_channel])
     env.reset()
