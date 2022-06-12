@@ -59,25 +59,24 @@ class ActorCritic(torch.nn.Module):
         super(ActorCritic, self).__init__(**kwargs)
 
         if USE_MHA:
-            self.MHA = torch.nn.MultiheadAttention(state_size, 1)
-            self.flat = torch.nn.Flatten()
-            self.d1 = torch.nn.Linear(state_size, 128)
-        else:
-            self.d1 = torch.nn.Linear(state_size, 128)
+            self.Q = torch.nn.Linear(128, 128)
+            self.K = torch.nn.Linear(128, 128)
+            self.V = torch.nn.Linear(128, 128)
+            self.MHA = torch.nn.MultiheadAttention(128, 1)
             
+        self.d1 = torch.nn.Linear(state_size, 128)
         self.d2 = torch.nn.Linear(128, 128)
         self.pi = torch.nn.Linear(128, action_size)
         self.v = torch.nn.Linear(128, 1)
         
     def forward(self, x):
-
+        x = F.relu(self.d1(x))
+        
         if USE_MHA:
-            x = x.reshape((x.shape[0], 1, x.shape[1]))
-            x, _ = self.MHA(x, x, x)
-            x = self.flat(x)
-            x = F.relu(self.fc1(x))
-        else:
-            x = F.relu(self.d1(x))
+            q, k, v = self.Q(x), self.K(x), self.V(x)
+            q, k, v = map(lambda x: x.unsqueeze(0), [q, k, v])
+            x, w = self.MHA(q, k, v)
+            x = x.squeeze(0)
             
         x = F.relu(self.d2(x))
 
