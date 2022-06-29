@@ -187,7 +187,8 @@ if __name__ == '__main__':
     for key, value in env_static_config.items():
         environment_parameters_channel.set_float_parameter(key, value)
     for key, value in env_dynamic_config.items():
-        environment_parameters_channel.set_uniform_sampler_parameters(key, value["min"], value["max"], value["seed"])
+        environment_parameters_channel.set_uniform_sampler_parameters(
+                              key, value["min"], value["max"], value["seed"])
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
