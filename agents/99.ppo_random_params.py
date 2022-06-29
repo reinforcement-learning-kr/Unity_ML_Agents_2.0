@@ -107,7 +107,7 @@ class PPOAgent:
 
         state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
                                                         [state, action, reward, next_state, done])
-        # pi_old, advantage 계산 
+        # prob_old, adv, ret 계산 
         with torch.no_grad():
             pi_old, value = self.network(state)
             prob_old = pi_old.gather(1, action.long())
