@@ -180,7 +180,7 @@ if __name__ == '__main__':
                                           environment_parameters_channel])
     env.reset()
 
-    # 유니티 브레인 설정 
+    # 유니티 behavior 설정 
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
