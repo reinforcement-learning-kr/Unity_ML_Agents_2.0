@@ -57,9 +57,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class ActorCritic(torch.nn.Module):
     def __init__(self, **kwargs):
         super(ActorCritic, self).__init__(**kwargs)
-        self.d1 = torch.nn.Linear(state_size, 128)
-        self.d2 = torch.nn.Linear(128, 128)
-        self.hn = HyperNetwork(128, action_size, goal_size)
+        self.d1 = torch.nn.Linear(state_size, 256)
+        self.d2 = torch.nn.Linear(256, 256)
+        self.hn = HyperNetwork(256, action_size, goal_size)
         
     def forward(self, x, h):
         x = F.relu(self.d1(x))
@@ -73,10 +73,10 @@ class HyperNetwork(torch.nn.Module):
         self.action_size = action_size
         self.hyper_input_size = hyper_input_size
 
-        self.d1 = torch.nn.Linear(self.hyper_input_size, 64)
-        self.d2 = torch.nn.Linear(64, 64)
-        self.pi = torch.nn.Linear(64, self.input_unit_size * self.action_size)
-        self.v = torch.nn.Linear(64, self.input_unit_size)
+        self.d1 = torch.nn.Linear(self.hyper_input_size, 128)
+        self.d2 = torch.nn.Linear(128, 128)
+        self.pi = torch.nn.Linear(128, self.input_unit_size * self.action_size)
+        self.v = torch.nn.Linear(128, self.input_unit_size)
 
     def forward(self, x, h):
         h = F.relu(self.d1(h))
