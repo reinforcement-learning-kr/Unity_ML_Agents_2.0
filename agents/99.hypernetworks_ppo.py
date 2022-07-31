@@ -12,8 +12,8 @@ from mlagents_envs.side_channel.engine_configuration_channel\
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
-state_size = 117 # Ray(19 * 6 = 114) & position(3)
-action_size = 7
+state_size = 120 # Ray(19 * 6 = 114) & position(3) & rotation(3)
+action_size = 4
 goal_size = 2 # goal_signal
 
 GOAL_OBS = 0
@@ -25,8 +25,8 @@ train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
-n_step = 128
-batch_size = 128
+n_step = 2560
+batch_size = 256
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
@@ -48,7 +48,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/PPO/{date_time}"
-load_path = f"./saved_models/{game}/PPO/20220502131128"
+load_path = f"./saved_models/{game}/PPO/20220718120425"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -73,21 +73,25 @@ class HyperNetwork(torch.nn.Module):
         self.action_size = action_size
         self.hyper_input_size = hyper_input_size
 
-        self.d1 = torch.nn.Linear(self.hyper_input_size, 128)
-        self.d2 = torch.nn.Linear(128, 128)
-        self.pi = torch.nn.Linear(128, self.input_unit_size * self.action_size)
-        self.v = torch.nn.Linear(128, self.input_unit_size)
+        self.d1 = torch.nn.Linear(self.hyper_input_size, 256)
+        self.d2 = torch.nn.Linear(256, 256)
+        self.pi = torch.nn.Linear(256, self.input_unit_size * self.action_size)
+        self.v = torch.nn.Linear(256, self.input_unit_size)
 
     def forward(self, x, h):
         h = F.relu(self.d1(h))
         h = F.relu(self.d2(h))
-        target_weights_pi = F.softmax(self.pi(h))
-        target_weights_v = self.v(h)
+        target_weights_pi = F.relu(self.pi(h))
+        target_weights_v = F.relu(self.v(h))
+
+        x = x.unsqueeze(dim=1)
         target_weights_pi = target_weights_pi.view(-1, self.input_unit_size, self.action_size)
-        result_pi = torch.bmm(x.unsqueeze(dim=1), target_weights_pi)
-        target_weights_v = target_weights_v.reshape(-1, self.input_unit_size, 1)
-        result_v = torch.bmm(x.unsqueeze(dim=1), target_weights_v)
-        return F.softmax(result_pi).squeeze(dim=1), result_v.squeeze(dim=1)
+        result_pi = torch.bmm(x, target_weights_pi)
+        result_pi = result_pi.squeeze(dim = 1)
+        target_weights_v = target_weights_v.view(-1, self.input_unit_size, 1)
+        result_v = torch.bmm(x, target_weights_v)
+
+        return F.softmax(result_pi, dim=1), result_v.squeeze(dim=1)
 
 # PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의 
 class PPOAgent:
