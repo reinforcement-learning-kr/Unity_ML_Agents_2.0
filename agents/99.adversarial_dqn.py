@@ -149,7 +149,7 @@ class DQNAgent:
         }, self.save_path+'/ckpt')
 
     # 학습 기록 
-    def write_summray(self, score, loss, epsilon, step):
+    def write_summary(self, score, loss, epsilon, step):
             self.writer.add_scalar("run/score", score, step)
             self.writer.add_scalar("model/loss", loss, step)
             self.writer.add_scalar("model/epsilon", epsilon, step)
@@ -232,8 +232,8 @@ if __name__ == '__main__':
                 mean_score_B = np.mean(scores_B)
                 mean_loss_A = np.mean(losses_A)
                 mean_loss_B = np.mean(losses_B)
-                agent_A.write_summray(mean_score_A, mean_loss_A, agent_A.epsilon, step)
-                agent_B.write_summray(mean_score_B, mean_loss_B, agent_B.epsilon, step)
+                agent_A.write_summary(mean_score_A, mean_loss_A, agent_A.epsilon, step)
+                agent_B.write_summary(mean_score_B, mean_loss_B, agent_B.epsilon, step)
                 losses_A, losses_B, scores_A, scores_B = [], [], [], []
 
                 print(f"{episode} Episode / Step: {step} / "  +\
