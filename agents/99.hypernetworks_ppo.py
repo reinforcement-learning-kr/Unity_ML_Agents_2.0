@@ -12,16 +12,16 @@ from mlagents_envs.side_channel.engine_configuration_channel\
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
-state_size = 120 # Ray(19 * 6 = 114) & position(3) & rotation(3)
-action_size = 4
+state_size = 126 # Ray(19 * 6 = 114) & position(3) & rotation(3) & velocity(3) & ball velocity(3)
+action_size = 4 # Rotate(2) & Move(2)
 goal_size = 2 # goal_signal
 
 GOAL_OBS = 0
 RAY_OBS = 1
 VECTOR_OBS = 2
 
-load_model = False
-train_mode = True
+load_model = True
+train_mode = False
 
 discount_factor = 0.99
 learning_rate = 3e-4
@@ -31,8 +31,8 @@ n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
 
-run_step = 2000000 if train_mode else 0
-test_step = 100000
+run_step = 2500000 if train_mode else 0
+test_step = 10000
 
 print_interval = 10
 save_interval = 100
@@ -48,7 +48,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/PPO/{date_time}"
-load_path = f"./saved_models/{game}/PPO/20220718120425"
+load_path = f"./saved_models/{game}/PPO/20220803093412"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
