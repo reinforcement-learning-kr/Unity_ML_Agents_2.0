@@ -2,7 +2,8 @@
 
 이 레포지토리는 [Reinforcement Learning Korea](<https://www.facebook.com/groups/ReinforcementLearningKR/?ref=bookmarks>)의 유니티 머신러닝 에이전트 튜토리얼 제작 프로젝트의 결과로 제작된 강의들을 위한 자료들을 포함하고 있습니다. 본 레포에서는 다음의 강의에 대한 자료를 제공합니다. 
 
-- [[인프런] 유니티 머신러닝 에이전트 완전 정복 (기초편)](https://www.inflearn.com/course/%EC%9C%A0%EB%8B%88%ED%8B%B0-%EB%A8%B8%EC%8B%A0%EB%9F%AC%EB%8B%9D-%EC%97%90%EC%9D%B4%EC%A0%84%ED%8A%B8-%EA%B8%B0%EC%B4%88)
+- [[인프런] 유니티 머신러닝 에이전트 완전 정복 (기초편)](https://inf.run/d2do)
+- [[위키북스] 파이토치와 유니티 ML-Agents로 배우는 강화학습](https://wikibook.co.kr/pytorch-mlagents/)
 
 이 레포는 본 강의에서 제작하는 유니티 ML-Agents([Github](<https://github.com/Unity-Technologies/ml-agents>)) 환경들의 빌드파일과 유니티 프로젝트 파일을 제공합니다. 또한 제공된 환경들에서 에이전트를 학습하기 위한 심층강화학습 알고리즘을 제공합니다. 
 
