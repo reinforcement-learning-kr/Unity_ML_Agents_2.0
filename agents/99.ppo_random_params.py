@@ -164,7 +164,7 @@ class PPOAgent:
             "optimizer" : self.optimizer.state_dict(),
         }, save_path+'/ckpt')
 
-        # 학습 기록 
+    # 학습 기록 
     def write_summary(self, score, actor_loss, critic_loss, step):
         self.writer.add_scalar("run/score", score, step)
         self.writer.add_scalar("model/actor_loss", actor_loss, step)
@@ -209,7 +209,7 @@ if __name__ == '__main__':
         env.set_actions(behavior_name, action_tuple)
         env.step()
 
-        #환경으로부터 얻는 정보
+        # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
         done = [False] * num_worker
         next_state = dec.obs[0]
@@ -224,7 +224,7 @@ if __name__ == '__main__':
         if train_mode:
             for id in range(num_worker):
                 agent.append_sample(state[id], action[id], [reward[id]], next_state[id], [done[id]])
-            #학습수행
+            # 학습수행
             if (step+1) % n_step == 0:
                 actor_loss, critic_loss = agent.train_model()
                 actor_losses.append(actor_loss)
