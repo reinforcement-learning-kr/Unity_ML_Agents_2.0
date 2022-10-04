@@ -235,7 +235,7 @@ if __name__ == '__main__':
             scores.append(score)
             score = 0
 
-          # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
+            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
             if episode % print_interval == 0:
                 mean_score = np.mean(scores)
                 mean_actor_loss = np.mean(actor_losses) if len(actor_losses) > 0 else 0
