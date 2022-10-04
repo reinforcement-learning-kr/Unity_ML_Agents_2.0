@@ -165,13 +165,13 @@ class PPOAgent:
                 pi, value = self.network(_state, _goal_signal)
                 prob = pi.gather(1, _action.long())
 
-                #정책신경망 손실함수 계산
+                # 정책신경망 손실함수 계산
                 ratio = prob / (_prob_old + 1e-7)
                 surr1 = ratio * _adv
                 surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * _adv
                 actor_loss = -torch.min(surr1, surr2).mean()
 
-                #가치신경망 손실함수 계산
+                # 가치신경망 손실함수 계산
                 critic_loss = F.mse_loss(value, _ret).mean()
 
                 total_loss = actor_loss + critic_loss
