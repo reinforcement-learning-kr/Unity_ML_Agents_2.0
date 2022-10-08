@@ -59,6 +59,7 @@ class ActorCritic(torch.nn.Module):
         super(ActorCritic, self).__init__(**kwargs)
         self.e1 = torch.nn.Linear(qkv_size, 128)
         self.MHA = torch.nn.MultiheadAttention(128, 4)
+        
         self.d1 = torch.nn.Linear(state_size, hidden_unit)
         self.d2 = torch.nn.Linear(hidden_unit, hidden_unit)
         self.pi = torch.nn.Linear(hidden_unit, action_size)
