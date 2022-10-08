@@ -109,7 +109,7 @@ class PPOAgent:
 
     # 정책을 통해 행동 결정 
     def get_action(self, state, goal_signal, training=True):
-        #  네트워크 모드 설정
+        # 네트워크 모드 설정
         self.network.train(training)
 
         # 네트워크 연산에 따라 행동 결정

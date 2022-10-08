@@ -31,7 +31,7 @@ test_step = 100000
 print_interval = 10
 save_interval = 100
 
-# 닷지 환경 설정 ()
+# 닷지 환경 설정
 env_static_config = {"ballSpeed": 4, "ballRandom": 0.2, "randomSeed": 77, "agentSpeed": 30}
 env_dynamic_config = {"boardRadius": {"min":6, "max": 8, "seed": 77},
                       "ballNums": {"min": 10, "max": 15, "seed": 77}}
@@ -82,7 +82,7 @@ class PPOAgent:
 
     # 정책을 통해 행동 결정 
     def get_action(self, state, training=True):
-        #  네트워크 모드 설정
+        # 네트워크 모드 설정
         self.network.train(training)
 
         # 네트워크 연산에 따라 행동 결정
