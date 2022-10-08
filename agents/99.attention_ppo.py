@@ -11,10 +11,10 @@ from mlagents_envs.side_channel.engine_configuration_channel\
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 
-#파라미터 값 세팅 
+# 파라미터 값 세팅 
 state_size = 2 + 128 + 128 # Agent(2), Ball(4)*40
-action_size = 5
 qkv_size = 160 # 40 * 4
+action_size = 5
 hidden_unit = 256
 
 load_model = False
@@ -53,36 +53,24 @@ load_path = f"./saved_models/{game}/PPO/20220908190757"
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-USE_MHA = True
-
 # ActorCritic 클래스 -> Actor Network, Critic Network 정의 
 class ActorCritic(torch.nn.Module):
     def __init__(self, **kwargs):
         super(ActorCritic, self).__init__(**kwargs)
-
         self.e1 = torch.nn.Linear(qkv_size, 128)
         self.MHA = torch.nn.MultiheadAttention(128, 4)
-        if USE_MHA:
-            self.d1 = torch.nn.Linear(state_size, hidden_unit)
-        else:
-            self.d1 = torch.nn.Linear(162, hidden_unit)
-
+        self.d1 = torch.nn.Linear(state_size, hidden_unit)
         self.d2 = torch.nn.Linear(hidden_unit, hidden_unit)
         self.pi = torch.nn.Linear(hidden_unit, action_size)
         self.v = torch.nn.Linear(hidden_unit, 1)
         
     def forward(self, x, qkv):
         origin_qkv = qkv
-        qkv = self.e1(qkv)
-        qkv = qkv.unsqueeze(dim=0)
-
-        if USE_MHA:
-            attn_output, attn_output_weights = self.MHA(qkv, qkv, qkv)        
-            x = torch.cat((x, qkv.squeeze(dim=0)), 1)
-            x = torch.cat((x, attn_output.squeeze(dim=0)), 1)
-        else:
-            x = torch.cat((x, origin_qkv.squeeze(dim=0)), 1)
-
+        qkv = self.e1(qkv).unsqueeze(dim=0)
+        attn_output, attn_output_weights = self.MHA(qkv, qkv, qkv)
+        
+        x = torch.cat((x, qkv.squeeze(dim=0)), 1)
+        x = torch.cat((x, attn_output.squeeze(dim=0)), 1)
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
@@ -159,13 +147,13 @@ class PPOAgent:
                 pi, value = self.network(_state, _qkv)
                 prob = pi.gather(1, _action.long())
 
-                #정책신경망 손실함수 계산
+                # 정책신경망 손실함수 계산
                 ratio = prob / (_prob_old + 1e-7)
                 surr1 = ratio * _adv
                 surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * _adv
                 actor_loss = -torch.min(surr1, surr2).mean()
 
-                #가치신경망 손실함수 계산
+                # 가치신경망 손실함수 계산
                 critic_loss = F.mse_loss(value, _ret).mean()
 
                 total_loss = actor_loss + critic_loss
@@ -188,7 +176,7 @@ class PPOAgent:
             "optimizer" : self.optimizer.state_dict(),
         }, save_path+'/ckpt')
 
-        # 학습 기록 
+    # 학습 기록 
     def write_summray(self, score, actor_loss, critic_loss, step):
         self.writer.add_scalar("run/score", score, step)
         self.writer.add_scalar("model/actor_loss", actor_loss, step)
@@ -225,20 +213,18 @@ if __name__ == '__main__':
         # new version
         qkv = dec.obs[0].reshape((dec.obs[0].shape[0], dec.obs[0].shape[1] * dec.obs[0].shape[2]))
         state = dec.obs[1]
-
         action = agent.get_action(state, qkv, train_mode)
-
         action_tuple = ActionTuple()
         action_tuple.add_discrete(action)
         env.set_actions(behavior_name, action_tuple)
         env.step()
 
-        #환경으로부터 얻는 정보
+        # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
         done = [False] * num_worker
 
         # new version
-        #next_qkv = dec.obs[0]
+        # next_qkv = dec.obs[0]
         next_qkv = dec.obs[0].reshape((dec.obs[0].shape[0], dec.obs[0].shape[1] * dec.obs[0].shape[2]))
         next_state = dec.obs[1]
 
@@ -256,7 +242,7 @@ if __name__ == '__main__':
         if train_mode:
             for id in range(num_worker):
                 agent.append_sample(state[id], qkv[id], action[id], [reward[id]], next_state[id], next_qkv[id], [done[id]])
-            #학습수행
+            # 학습수행
             if (step+1) % n_step == 0:
                 actor_loss, critic_loss = agent.train_model()
                 actor_losses.append(actor_loss)
@@ -267,7 +253,7 @@ if __name__ == '__main__':
             scores.append(score)
             score = 0
 
-          # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
+            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
             if episode % print_interval == 0:
                 mean_score = np.mean(scores)
                 mean_actor_loss = np.mean(actor_losses) if len(actor_losses) > 0 else 0
