@@ -19,7 +19,7 @@ load_model = False
 train_mode = True
 
 rnd_learning_rate = 1e-4
-rnd_strength = 0.05
+rnd_strength = 0.01
 
 discount_factor = 0.99
 learning_rate = 3e-4
@@ -29,8 +29,8 @@ n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
 
-run_step = 5000000 if train_mode else 0
-test_step = 100000
+run_step = 500000 if train_mode else 0
+test_step = 10000
 
 print_interval = 10
 save_interval = 100
@@ -250,36 +250,60 @@ if __name__ == '__main__':
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
-        state = np.concatenate([dec.obs[0], dec.obs[1],  dec.obs[2],  dec.obs[3]], axis=-1)
-        action = agent.get_action(state, train_mode)
-        action_tuple = ActionTuple()
-        action_tuple.add_discrete(action)
-        env.set_actions(behavior_name, action_tuple)
+        
+        state = [[0 for _ in range(state_size)] for _ in range(num_worker)]
+        action = [0 for _ in range(num_worker)]
+        next_state = [[0 for _ in range(state_size)] for _ in range(num_worker)]
+        reward = [0 for _ in range(num_worker)]
+        done = [False for _ in range(num_worker)]
+        notyet = [True for _ in range(num_worker)]
+        
+        for id in dec.agent_id:
+            _id = list(dec.agent_id).index(id)
+            state[id] = np.concatenate([dec.obs[0][_id], dec.obs[1][_id],  dec.obs[2][_id],  dec.obs[3][_id]], axis=-1)
+            tmpaction = agent.get_action([state[id]])
+            action_tuple = ActionTuple()
+            action_tuple.add_discrete(tmpaction)
+            action[id] = tmpaction[0]
+            env.set_action_for_agent(behavior_name, id, action_tuple)
+            notyet[id] = False
         env.step()
 
         # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
-        done = [False] * num_worker
-        next_state = np.concatenate([dec.obs[0], dec.obs[1],  dec.obs[2],  dec.obs[3]], axis=-1)
-        reward = dec.reward
+        for id in dec.agent_id:
+            _id = list(dec.agent_id).index(id)
+            next_state[id] = np.concatenate([dec.obs[0][_id], dec.obs[1][_id],  dec.obs[2][_id],  dec.obs[3][_id]], axis=-1)
+            reward[id] = dec.reward[id]
+
         for id in term.agent_id:
             _id = list(term.agent_id).index(id)
             done[id] = True
             next_state[id] = np.concatenate([term.obs[0][_id], term.obs[1][_id], term.obs[2][_id], term.obs[3][_id]], axis= -1)
             reward[id] = term.reward[_id]
-        score += reward[0]
+        score += sum(reward)/len(reward)
 
         if train_mode:
             for id in range(num_worker):
+                if notyet[id]: continue
                 agent.append_rnd_sample(next_state[id])
                 agent.append_sample(state[id], action[id], [reward[id]], next_state[id], [done[id]])
-            # 학습수행
+
+                # 학습수행  
+                if len(agent.memory) / num_worker == n_step:
+                    rnd_loss = agent.train_rnd_model()
+                    actor_loss, critic_loss = agent.train_model()
+                    rnd_losses.append(rnd_loss)
+                    actor_losses.append(actor_loss)
+                    critic_losses.append(critic_loss)
+            '''
             if (step+1) % n_step == 0:
                 rnd_loss = agent.train_rnd_model()
                 actor_loss, critic_loss = agent.train_model()
                 rnd_losses.append(rnd_loss)
                 actor_losses.append(actor_loss)
                 critic_losses.append(critic_loss)
+            '''
 
         if done[0]:
             episode +=1
@@ -296,7 +320,7 @@ if __name__ == '__main__':
                 actor_losses, critic_losses, rnd_losses, scores = [], [], [], []
 
                 print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +\
-                      f"Actor loss: {mean_actor_loss:.2f} / Critic loss: {mean_critic_loss:.4f} / RND loss: {mean_rnd_loss:.4f}" )
+                    f"Actor loss: {mean_actor_loss:.2f} / Critic loss: {mean_critic_loss:.4f} / RND loss: {mean_rnd_loss:.4f}" )
 
             # 네트워크 모델 저장 
             if train_mode and episode % save_interval == 0:
