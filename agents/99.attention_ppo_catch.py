@@ -10,35 +10,30 @@ from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
-
-# 파라미터 값 세팅
-state_size = 160 # Ray_info
-input_size = 2 + 128 + 128 # Agent_info(2) + MHA_input(128) + MHA_output(128)
-hidden_unit = 256
-action_size = 5
+#파라미터 값 세팅 
+state_size = 12 # Agent(x,y), Ball(x,y) [1,10]
+action_size = 4
 
 load_model = False
 train_mode = True
 
 discount_factor = 0.99
-learning_rate = 3e-4
-n_step = 5120
-batch_size = 512
+learning_rate = 0.00025
+n_step = 640
+batch_size = 64
 n_epoch = 3
 _lambda = 0.95
-epsilon = 0.3
+epsilon = 0.1
 clip_grad_norm = 1.
 
-run_step = 4000000 if train_mode else 0
-test_step = 10000
+run_step = 1000000 if train_mode else 0
+test_step = 100000
 
 print_interval = 10
 save_interval = 100
 
-env_config = {"ballSpeed": 2, "ballNums": 15, "ballRandom": 0.2, "randomSeed": 77, "agentSpeed": 15}
-
 # 유니티 환경 경로 
-game = "Dodge_Attention"
+game = "Catch_Attention"
 os_name = platform.system()
 if os_name == 'Windows':
     env_name = f"../envs/{game}_{os_name}/{game}"
@@ -47,30 +42,36 @@ elif os_name == 'Darwin':
 
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-save_path = f"./saved_models/{game}/PPO/{date_time}_mha"
-load_path = f"./saved_models/{game}/PPO/20220908190757"
+save_path = f"./saved_models/{game}/PPO/{date_time}"
+load_path = f"./saved_models/{game}/PPO/20220805151916"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+USE_MHA = True
+
 # ActorCritic 클래스 -> Actor Network, Critic Network 정의 
-class PPOAttentionAgent(torch.nn.Module):
+class ActorCritic(torch.nn.Module):
     def __init__(self, **kwargs):
-        super(PPOAttentionAgent, self).__init__(**kwargs)
-        self.e1 = torch.nn.Linear(state_size, 128)
-        self.MHA = torch.nn.MultiheadAttention(128, 4)
-        
-        self.d1 = torch.nn.Linear(input_size, hidden_unit)
-        self.d2 = torch.nn.Linear(hidden_unit, hidden_unit)
-        self.pi = torch.nn.Linear(hidden_unit, action_size)
-        self.v = torch.nn.Linear(hidden_unit, 1)
+        super(ActorCritic, self).__init__(**kwargs)
+
+        if USE_MHA:
+            self.embedding = torch.nn.Linear(2, 1)
+            self.MHA = torch.nn.MultiheadAttention(10, 10)
+            
+        self.d1 = torch.nn.Linear(state_size, 128)
+        self.d2 = torch.nn.Linear(128, 128)
+        self.pi = torch.nn.Linear(128, action_size)
+        self.v = torch.nn.Linear(128, 1)
         
     def forward(self, x, qkv):
-        qkv = self.e1(qkv).unsqueeze(dim=0)
-        attn_output, attn_output_weights = self.MHA(qkv, qkv, qkv)
-        
-        x = torch.cat((x, qkv.squeeze(dim=0)), 1)
+        qkv = self.embedding(qkv).squeeze(dim=2)
+        qkv = qkv.unsqueeze(dim=0)
+        print(qkv)
+        if USE_MHA:
+            attn_output, attn_output_weights = self.MHA(qkv, qkv, qkv)
         x = torch.cat((x, attn_output.squeeze(dim=0)), 1)
+        
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
@@ -78,7 +79,7 @@ class PPOAttentionAgent(torch.nn.Module):
 # PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의 
 class PPOAgent:
     def __init__(self):
-        self.network = PPOAttentionAgent().to(device)
+        self.network = ActorCritic().to(device)
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
         self.memory = list()
         self.writer = SummaryWriter(save_path)
@@ -91,7 +92,7 @@ class PPOAgent:
 
     # 정책을 통해 행동 결정 
     def get_action(self, state, qkv, training=True):
-        # 네트워크 모드 설정
+        #  네트워크 모드 설정
         self.network.train(training)
 
         # 네트워크 연산에 따라 행동 결정
@@ -147,13 +148,13 @@ class PPOAgent:
                 pi, value = self.network(_state, _qkv)
                 prob = pi.gather(1, _action.long())
 
-                # 정책신경망 손실함수 계산
+                #정책신경망 손실함수 계산
                 ratio = prob / (_prob_old + 1e-7)
                 surr1 = ratio * _adv
                 surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * _adv
                 actor_loss = -torch.min(surr1, surr2).mean()
 
-                # 가치신경망 손실함수 계산
+                #가치신경망 손실함수 계산
                 critic_loss = F.mse_loss(value, _ret).mean()
 
                 total_loss = actor_loss + critic_loss
@@ -176,7 +177,7 @@ class PPOAgent:
             "optimizer" : self.optimizer.state_dict(),
         }, save_path+'/ckpt')
 
-    # 학습 기록 
+        # 학습 기록 
     def write_summray(self, score, actor_loss, critic_loss, step):
         self.writer.add_scalar("run/score", score, step)
         self.writer.add_scalar("model/actor_loss", actor_loss, step)
@@ -211,30 +212,31 @@ if __name__ == '__main__':
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
         # new version
-        qkv = dec.obs[0].reshape((dec.obs[0].shape[0], dec.obs[0].shape[1] * dec.obs[0].shape[2]))
+        qkv = dec.obs[0]
         state = dec.obs[1]
+
         action = agent.get_action(state, qkv, train_mode)
+
         action_tuple = ActionTuple()
         action_tuple.add_discrete(action)
         env.set_actions(behavior_name, action_tuple)
         env.step()
 
-        # 환경으로부터 얻는 정보
+        #환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
         done = [False] * num_worker
 
         # new version
-        # next_qkv = dec.obs[0]
-        next_qkv = dec.obs[0].reshape((dec.obs[0].shape[0], dec.obs[0].shape[1] * dec.obs[0].shape[2]))
+        next_qkv = dec.obs[0]
         next_state = dec.obs[1]
 
         reward = dec.reward
         for id in term.agent_id:
             _id = list(term.agent_id).index(id)
             done[id] = True
-            term_qkv = term.obs[0].reshape((term.obs[0].shape[0], term.obs[0].shape[1] * term.obs[0].shape[2]))
-            next_qkv[id] = term_qkv[_id]
-            #next_qkv[id] =  term.obs[0][_id]
+            #term_qkv = term.obs[0].reshape((term.obs[0].shape[0], term.obs[0].shape[1] * term.obs[0].shape[2]))
+            #next_qkv[id] = term_qkv[_id]
+            next_qkv[id] =  term.obs[0][_id]
             next_state[id] =  term.obs[1][_id]
             reward[id] = term.reward[_id]
         score += reward[0]
@@ -242,7 +244,7 @@ if __name__ == '__main__':
         if train_mode:
             for id in range(num_worker):
                 agent.append_sample(state[id], qkv[id], action[id], [reward[id]], next_state[id], next_qkv[id], [done[id]])
-            # 학습수행
+            #학습수행
             if (step+1) % n_step == 0:
                 actor_loss, critic_loss = agent.train_model()
                 actor_losses.append(actor_loss)
@@ -253,7 +255,7 @@ if __name__ == '__main__':
             scores.append(score)
             score = 0
 
-            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
+          # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
             if episode % print_interval == 0:
                 mean_score = np.mean(scores)
                 mean_actor_loss = np.mean(actor_losses) if len(actor_losses) > 0 else 0
