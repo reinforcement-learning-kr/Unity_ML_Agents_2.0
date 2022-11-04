@@ -69,8 +69,10 @@ class PPOAttentionAgent(torch.nn.Module):
         qkv = self.e1(qkv).unsqueeze(dim=0)
         attn_output, attn_output_weights = self.MHA(qkv, qkv, qkv)
         
+        # 에이전트 상태(x), MHA의 입력값(qkv), 그리고 출력값(attn_output)를 하나의 벡터로 합침
         x = torch.cat((x, qkv.squeeze(dim=0)), 1)
         x = torch.cat((x, attn_output.squeeze(dim=0)), 1)
+
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
@@ -210,21 +212,20 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        # new version
+        # 현재 상태(state, qkv)에 따른 행동(action) 추론
         qkv = dec.obs[0].reshape((dec.obs[0].shape[0], dec.obs[0].shape[1] * dec.obs[0].shape[2]))
         state = dec.obs[1]
         action = agent.get_action(state, qkv, train_mode)
         action_tuple = ActionTuple()
         action_tuple.add_discrete(action)
         env.set_actions(behavior_name, action_tuple)
+        
+        # 스텝 진행
         env.step()
 
-        # 환경으로부터 얻는 정보
+        # 스텝 진행 후 현재 스텝에 대한 상태(next_state) 저장
         dec, term = env.get_steps(behavior_name)
         done = [False] * num_worker
-
-        # new version
-        # next_qkv = dec.obs[0]
         next_qkv = dec.obs[0].reshape((dec.obs[0].shape[0], dec.obs[0].shape[1] * dec.obs[0].shape[2]))
         next_state = dec.obs[1]
 
@@ -234,7 +235,6 @@ if __name__ == '__main__':
             done[id] = True
             term_qkv = term.obs[0].reshape((term.obs[0].shape[0], term.obs[0].shape[1] * term.obs[0].shape[2]))
             next_qkv[id] = term_qkv[_id]
-            #next_qkv[id] =  term.obs[0][_id]
             next_state[id] =  term.obs[1][_id]
             reward[id] = term.reward[_id]
         score += reward[0]
