@@ -53,7 +53,7 @@ load_path = f"./saved_models/{game}/PPO/20220908190757"
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# ActorCritic 클래스 -> Actor Network, Critic Network 정의 
+# PPOAttentionAgent 클래스 -> Attention을 사용하는 PPO Network 정의 
 class PPOAttentionAgent(torch.nn.Module):
     def __init__(self, **kwargs):
         super(PPOAttentionAgent, self).__init__(**kwargs)
