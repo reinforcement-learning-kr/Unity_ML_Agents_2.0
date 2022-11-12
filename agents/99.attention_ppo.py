@@ -17,19 +17,22 @@ input_size = 2 + 128 + 128 # Agent_info(2) + MHA_input(128) + MHA_output(128)
 hidden_unit = 256
 action_size = 5
 
+RAY_OBS = 0
+POS_OBS = 1
+
 load_model = False
 train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
-n_step = 5120
+n_step = 1024
 batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.3
 clip_grad_norm = 1.
 
-run_step = 4000000 if train_mode else 0
+run_step = 1000000 if train_mode else 0
 test_step = 10000
 
 print_interval = 10
@@ -47,16 +50,16 @@ elif os_name == 'Darwin':
 
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-save_path = f"./saved_models/{game}/PPO/{date_time}_mha"
+save_path = f"./saved_models/{game}/PPO/{date_time}"
 load_path = f"./saved_models/{game}/PPO/20220908190757"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# PPOAttentionAgent 클래스 -> Attention을 사용하는 PPO Network 정의 
-class PPOAttentionAgent(torch.nn.Module):
+# AttentionActorCritic 클래스 -> Attention을 사용하는 ActorCritic Network 정의 
+class AttentionActorCritic(torch.nn.Module):
     def __init__(self, **kwargs):
-        super(PPOAttentionAgent, self).__init__(**kwargs)
+        super(AttentionActorCritic, self).__init__(**kwargs)
         self.e1 = torch.nn.Linear(state_size, 128)
         self.MHA = torch.nn.MultiheadAttention(128, 4)
         
@@ -80,7 +83,7 @@ class PPOAttentionAgent(torch.nn.Module):
 # PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의 
 class PPOAgent:
     def __init__(self):
-        self.network = PPOAttentionAgent().to(device)
+        self.network = AttentionActorCritic().to(device)
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
         self.memory = list()
         self.writer = SummaryWriter(save_path)
@@ -184,7 +187,7 @@ class PPOAgent:
         self.writer.add_scalar("model/actor_loss", actor_loss, step)
         self.writer.add_scalar("model/critic_loss", critic_loss, step)
 
-# Main 함수 -> 전체적으로 PPO 알고리즘을 진행 
+# Main 함수 -> 전체적으로 Attention PPO 알고리즘을 진행 
 if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
@@ -194,7 +197,7 @@ if __name__ == '__main__':
                                           environment_parameters_channel])
     env.reset()
 
-    # 유니티 브레인 설정 
+    # 유니티 behavior 설정 
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
@@ -213,29 +216,28 @@ if __name__ == '__main__':
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
         # 현재 상태(state, qkv)에 따른 행동(action) 추론
-        qkv = dec.obs[0].reshape((dec.obs[0].shape[0], dec.obs[0].shape[1] * dec.obs[0].shape[2]))
-        state = dec.obs[1]
+        qkv_preprocessing = lambda x : x.reshape((x.shape[0], -1))
+        qkv = qkv_preprocessing(dec.obs[RAY_OBS])
+        state = dec.obs[POS_OBS]
         action = agent.get_action(state, qkv, train_mode)
         action_tuple = ActionTuple()
         action_tuple.add_discrete(action)
         env.set_actions(behavior_name, action_tuple)
-        
-        # 스텝 진행
         env.step()
 
-        # 스텝 진행 후 현재 스텝에 대한 상태(next_state) 저장
+        # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
         done = [False] * num_worker
-        next_qkv = dec.obs[0].reshape((dec.obs[0].shape[0], dec.obs[0].shape[1] * dec.obs[0].shape[2]))
-        next_state = dec.obs[1]
-
+        next_qkv = qkv_preprocessing(dec.obs[RAY_OBS])
+        next_state = dec.obs[POS_OBS]
         reward = dec.reward
+        if len(term.agent_id) > 0 :
+            term_qkv = qkv_preprocessing(term.obs[RAY_OBS])
         for id in term.agent_id:
             _id = list(term.agent_id).index(id)
             done[id] = True
-            term_qkv = term.obs[0].reshape((term.obs[0].shape[0], term.obs[0].shape[1] * term.obs[0].shape[2]))
             next_qkv[id] = term_qkv[_id]
-            next_state[id] =  term.obs[1][_id]
+            next_state[id] =  term.obs[POS_OBS][_id]
             reward[id] = term.reward[_id]
         score += reward[0]
 
