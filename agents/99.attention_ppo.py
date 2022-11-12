@@ -30,7 +30,6 @@ batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.3
-clip_grad_norm = 1.
 
 run_step = 1000000 if train_mode else 0
 test_step = 10000
@@ -165,7 +164,6 @@ class PPOAgent:
 
                 self.optimizer.zero_grad()
                 total_loss.backward()
-                torch.nn.utils.clip_grad_norm_(self.network.parameters(), clip_grad_norm)
                 self.optimizer.step()
 
                 actor_losses.append(actor_loss.item())
