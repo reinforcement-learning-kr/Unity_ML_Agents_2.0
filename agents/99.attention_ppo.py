@@ -25,14 +25,14 @@ train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
-n_step = 1024
+n_step = 5120
 batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.3
 
-run_step = 1000000 if train_mode else 0
-test_step = 10000
+run_step = 500000 if train_mode else 0
+test_step = 100000
 
 print_interval = 10
 save_interval = 100
