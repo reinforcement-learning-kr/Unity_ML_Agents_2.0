@@ -121,8 +121,10 @@ class AttentionPPOAgent:
         done       = np.stack([m[6] for m in self.memory], axis=0)
         self.memory.clear()
 
-        state, qkv, action, reward, next_state, next_qkv, done = map(lambda x: torch.FloatTensor(x).to(device),
-                                                        [state, qkv, action, reward, next_state, next_qkv, done])
+        state, qkv, action, reward, next_state, next_qkv, done = \
+            map(lambda x: torch.FloatTensor(x).to(device),
+                [state, qkv, action, reward, next_state, next_qkv, done])
+                        
         # pi_old, advantage 계산 
         with torch.no_grad():
             pi_old, value = self.network(state, qkv)
