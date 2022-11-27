@@ -50,8 +50,8 @@ elif os_name == 'Darwin':
 
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-save_path = f"./saved_models/{game}/PPO/{date_time}"
-load_path = f"./saved_models/{game}/PPO/20220908190757"
+save_path = f"./saved_models/{game}/AttentionPPO/{date_time}"
+load_path = f"./saved_models/{game}/AttentionPPO/20220908190757"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -80,8 +80,8 @@ class AttentionActorCritic(torch.nn.Module):
         x = F.relu(self.d2(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
 
-# PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의 
-class PPOAgent:
+# AttentionPPOAgent 클래스 -> AttentionPPOAgent 알고리즘을 위한 다양한 함수 정의 
+class AttentionPPOAgent:
     def __init__(self):
         self.network = AttentionActorCritic().to(device)
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
@@ -203,8 +203,8 @@ if __name__ == '__main__':
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
-    # PPO 클래스를 agent로 정의 
-    agent = PPOAgent()
+    # AttentionPPOAgent 클래스를 agent로 정의 
+    agent = AttentionPPOAgent()
     actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
     for step in range(run_step + test_step):
         if step == run_step:
