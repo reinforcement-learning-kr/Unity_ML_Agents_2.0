@@ -244,7 +244,8 @@ if __name__ == '__main__':
 
         if train_mode:
             for id in range(num_worker):
-                agent.append_sample(state[id], qkv[id], action[id], [reward[id]], next_state[id], next_qkv[id], [done[id]])
+                agent.append_sample(state[id], qkv[id], action[id],
+                                    [reward[id]], next_state[id], next_qkv[id], [done[id]])
             # 학습수행
             if (step+1) % n_step == 0:
                 actor_loss, critic_loss = agent.train_model()
