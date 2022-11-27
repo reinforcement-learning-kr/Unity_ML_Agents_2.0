@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/TwoMissions/Scenes/TwoMissions.unity
+    guid: e6049f96e9a704e0ebd72cd128e50b16
   m_configObjects: {}

@@ -18,7 +18,6 @@ GameObject:
   - component: {fileID: 2494584708239127552}
   - component: {fileID: 2494584708239127553}
   - component: {fileID: 8072570568539865426}
-  - component: {fileID: 3333419298143961682}
   m_Layer: 0
   m_Name: Agent
   m_TagString: agent
@@ -215,21 +214,6 @@ MonoBehaviour:
   DecisionPeriod: 1
   TakeActionsBetweenDecisions: 1
 --- !u!114 &8072570568539865426
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2494584708239127556}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 38b7cc1f5819445aa85e9a9b054552dc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SensorName: GoalSensor
-  m_ObservationSize: 2
-  m_ObservationType: 1
---- !u!114 &3333419298143961682
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
