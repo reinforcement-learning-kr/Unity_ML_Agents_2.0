@@ -66,6 +66,7 @@ class ActorCritic(torch.nn.Module):
         x = F.relu(self.d2(x))
         return self.hn(x, h)
 
+# Hypernetwork 클래스 -> ActorCritic의 마지막 Layer hn 생성 
 class HyperNetwork(torch.nn.Module):
     def __init__(self, input_unit_size, action_size, hyper_input_size, **kwargs):
         super(HyperNetwork, self).__init__(**kwargs)
@@ -93,8 +94,8 @@ class HyperNetwork(torch.nn.Module):
 
         return F.softmax(result_pi, dim=1), result_v.squeeze(dim=1)
 
-# PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의 
-class PPOAgent:
+# HypernetworkAgent 클래스 -> Hypernetwork 알고리즘을 위한 다양한 함수 정의 
+class HypernetworkAgent:
     def __init__(self):
         self.network = ActorCritic().to(device)
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
@@ -117,7 +118,7 @@ class PPOAgent:
         action = torch.multinomial(pi, num_samples=1).cpu().numpy()
         return action
 
-    # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
+    # 리플레이 메모리에 데이터 추가 (상태, 목표신호, 행동, 보상, 다음 상태, 다음 목표신호, 게임 종료 여부)
     def append_sample(self, state, goal_signal, action, reward, next_state, next_goal_signal, done):
         self.memory.append((state, goal_signal, action, reward, next_state, next_goal_signal, done))
 
@@ -216,8 +217,8 @@ if __name__ == '__main__':
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
-    # PPO 클래스를 agent로 정의 
-    agent = PPOAgent()
+    # HypernetworkAgent 클래스를 agent로 정의 
+    agent = HypernetworkAgent()
     actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
     for step in range(run_step + test_step):
         if step == run_step:
