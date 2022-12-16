@@ -6,12 +6,13 @@ import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
-from mlagents_envs.side_channel.engine_configuration_channel import EngineConfigurationChannel
-from mlagents_envs.side_channel.environment_parameters_channel import EnvironmentParametersChannel
-
+from mlagents_envs.side_channel.engine_configuration_channel\
+                             import EngineConfigurationChannel
+from mlagents_envs.side_channel.environment_parameters_channel\
+                             import EnvironmentParametersChannel
 # 파라미터 값 세팅
 state_size = 122
-action_size = 4
+action_size = 5
 
 load_model = False
 train_mode = True
@@ -23,7 +24,6 @@ batch_size = 128
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
-clip_grad_norm = 1
 
 run_step = 2000000 if train_mode else 0
 test_step = 100000
@@ -31,17 +31,17 @@ test_step = 100000
 print_interval = 10
 save_interval = 100
 
+# curriculum learning 파라미터 값 세팅
 curriculum_level = 0
 
 curriculum_parameters = \
     [
-        {"boardRadius": 8.0, "ballSpeed": 2.5, "ballNums": 5},
-        {"boardRadius": 7.5, "ballSpeed": 3.0, "ballNums": 6},
-        {"boardRadius": 7.0, "ballSpeed": 3.5, "ballNums": 7},
-        {"boardRadius": 6.0, "ballSpeed": 4.0, "ballNums": 8},
+        {"boardRadius": 8.0, "ballSpeed": 2.5, "ballNums": 6},
+        {"boardRadius": 7.5, "ballSpeed": 3.0, "ballNums": 8},
+        {"boardRadius": 7.0, "ballSpeed": 3.5, "ballNums": 10},
     ]
 
-curriculum_threshold = [0.1, 0.3, 0.5, 1.0]
+curriculum_threshold = [0.2, 0.5, 1.0]
 
 # 유니티 환경 경로
 game = "Dodge"
@@ -82,14 +82,14 @@ class PPOAgent:
         self.writer = SummaryWriter(save_path)
 
         if load_model == True:
-            print(f"... Load Model from {load_path}/ckpt...")
-            checkpoint = torch.load(load_path + '/ckpt', map_location=device)
+            print(f"... Load Model from {load_path}/ckpt ...")
+            checkpoint = torch.load(load_path+'/ckpt', map_location=device)
             self.network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
 
     # 정책을 통해 행동 결정
     def get_action(self, state, training=True):
-        #  네트워크 모드 설정
+        # 네트워크 모드 설정
         self.network.train(training)
 
         # 네트워크 연산에 따라 행동 결정
@@ -105,16 +105,16 @@ class PPOAgent:
     def train_model(self):
         self.network.train()
 
-        state = np.stack([m[0] for m in self.memory], axis=0)
-        action = np.stack([m[1] for m in self.memory], axis=0)
-        reward = np.stack([m[2] for m in self.memory], axis=0)
+        state      = np.stack([m[0] for m in self.memory], axis=0)
+        action     = np.stack([m[1] for m in self.memory], axis=0)
+        reward     = np.stack([m[2] for m in self.memory], axis=0)
         next_state = np.stack([m[3] for m in self.memory], axis=0)
-        done = np.stack([m[4] for m in self.memory], axis=0)
+        done       = np.stack([m[4] for m in self.memory], axis=0)
         self.memory.clear()
 
         state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
                                                         [state, action, reward, next_state, done])
-        # pi_old, advantage 계산
+        # prob_old, adv, ret 계산 
         with torch.no_grad():
             pi_old, value = self.network(state)
             prob_old = pi_old.gather(1, action.long())
@@ -122,10 +122,10 @@ class PPOAgent:
             _, next_value = self.network(next_state)
             delta = reward + (1 - done) * discount_factor * next_value - value
             adv = delta.clone()
-            adv, done = map(lambda x: x.view(n_step, -1).transpose(0, 1).contiguous(), [adv, done])
+            adv, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, done])
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
-            adv = adv.transpose(0, 1).contiguous().view(-1, 1)
+            adv = adv.transpose(0,1).contiguous().view(-1, 1)
 
             ret = adv + value
 
@@ -135,7 +135,7 @@ class PPOAgent:
         for _ in range(n_epoch):
             np.random.shuffle(idxs)
             for offset in range(0, len(reward), batch_size):
-                idx = idxs[offset: offset + batch_size]
+                idx = idxs[offset : offset + batch_size]
 
                 _state, _action, _ret, _adv, _prob_old =\
                     map(lambda x: x[idx], [state, action, ret, adv, prob_old])
@@ -156,8 +156,6 @@ class PPOAgent:
 
                 self.optimizer.zero_grad()
                 total_loss.backward()
-                torch.nn.utils.clip_grad_norm_(
-                    self.network.parameters(), clip_grad_norm)
                 self.optimizer.step()
 
                 actor_losses.append(actor_loss.item())
@@ -174,11 +172,10 @@ class PPOAgent:
         }, save_path+'/ckpt')
 
         # 학습 기록
-    def write_summray(self, score, actor_loss, critic_loss, step):
+    def write_summary(self, score, actor_loss, critic_loss, step):
         self.writer.add_scalar("run/score", score, step)
         self.writer.add_scalar("model/actor_loss", actor_loss, step)
         self.writer.add_scalar("model/critic_loss", critic_loss, step)
-
 
 # Main 함수 -> 전체적으로 PPO 알고리즘을 진행
 if __name__ == '__main__':
@@ -208,15 +205,14 @@ if __name__ == '__main__':
     for step in range(run_step + test_step):
         if step == run_step:
             if train_mode:
-                agent.save_model(curriculum_level)
+                agent.save_model()
             print("TEST START")
             train_mode = False
-            engine_configuration_channel.set_configuration_parameters(
-                time_scale=1.0)
+            engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
         action_tuple = ActionTuple()
-        action_tuple.add_discrete(action + 1)
+        action_tuple.add_discrete(action)
         env.set_actions(behavior_name, action_tuple)
         env.step()
 
@@ -234,8 +230,7 @@ if __name__ == '__main__':
 
         if train_mode:
             for id in range(num_worker):
-                agent.append_sample(state[id], action[id], [
-                                    reward[id]], next_state[id], [done[id]])
+                agent.append_sample(state[id], action[id], [reward[id]], next_state[id], [done[id]])
             # 학습수행
             if (step+1) % n_step == 0:
                 actor_loss, critic_loss = agent.train_model()
@@ -243,7 +238,7 @@ if __name__ == '__main__':
                 critic_losses.append(critic_loss)
 
         if done[0]:
-            episode += 1
+            episode +=1
             scores.append(score)
             score = 0
 
@@ -251,12 +246,12 @@ if __name__ == '__main__':
             if episode % print_interval == 0:
                 mean_score = np.mean(scores)
                 mean_actor_loss = np.mean(actor_losses) if len(actor_losses) > 0 else 0
-                mean_critic_loss = np.mean(critic_losses) if len(critic_losses) > 0 else 0
-                agent.write_summray(mean_score, mean_actor_loss, mean_critic_loss, step)
+                mean_critic_loss = np.mean(critic_losses)  if len(critic_losses) > 0 else 0
+                agent.write_summary(mean_score, mean_actor_loss, mean_critic_loss, step)
                 actor_losses, critic_losses, scores = [], [], []
 
-                print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +
-                      f"Actor loss: {mean_actor_loss:.2f} / Critic loss: {mean_critic_loss:.4f}")
+                print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +\
+                      f"Actor loss: {mean_actor_loss:.2f} / Critic loss: {mean_critic_loss:.4f}" )
 
             # 네트워크 모델 저장
             if train_mode and episode % save_interval == 0:
