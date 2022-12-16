@@ -194,7 +194,7 @@ if __name__ == '__main__':
 
     # reset curriculum 
     for key, value in curriculum_parameters[curriculum_level].items():
-        environment_parameters_channel.set_float_parameter(key, value)\
+        environment_parameters_channel.set_float_parameter(key, value)
             
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
