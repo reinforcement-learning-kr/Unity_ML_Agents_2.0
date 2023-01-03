@@ -53,10 +53,10 @@ load_path = f"./saved_models/{game}/PPO/20220803093412"
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# ActorCritic 클래스 -> Actor Network, Critic Network 정의 
-class ActorCritic(torch.nn.Module):
+# HyperActorCritic 클래스 -> Hypernetwork를 적용한 Actor, Critic Network 정의 
+class HyperActorCritic(torch.nn.Module):
     def __init__(self, **kwargs):
-        super(ActorCritic, self).__init__(**kwargs)
+        super(HyperActorCritic, self).__init__(**kwargs)
         self.d1 = torch.nn.Linear(state_size, 256)
         self.d2 = torch.nn.Linear(256, 256)
         self.hn = HyperNetwork(256, action_size, goal_size)
@@ -66,6 +66,7 @@ class ActorCritic(torch.nn.Module):
         x = F.relu(self.d2(x))
         return self.hn(x, h)
 
+# HyperNetwork 클래스 -> HyperActorCritic의 마지막 Layer hn 생성 
 class HyperNetwork(torch.nn.Module):
     def __init__(self, input_unit_size, action_size, hyper_input_size, **kwargs):
         super(HyperNetwork, self).__init__(**kwargs)
@@ -93,10 +94,10 @@ class HyperNetwork(torch.nn.Module):
 
         return F.softmax(result_pi, dim=1), result_v.squeeze(dim=1)
 
-# PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의 
-class PPOAgent:
+# HypernetworkAgent 클래스 -> Hypernetwork 알고리즘을 위한 다양한 함수 정의 
+class HypernetworkAgent:
     def __init__(self):
-        self.network = ActorCritic().to(device)
+        self.network = HyperActorCritic().to(device)
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
         self.memory = list()
         self.writer = SummaryWriter(save_path)
@@ -117,7 +118,7 @@ class PPOAgent:
         action = torch.multinomial(pi, num_samples=1).cpu().numpy()
         return action
 
-    # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
+    # 리플레이 메모리에 데이터 추가 (상태, 목표신호, 행동, 보상, 다음 상태, 다음 목표신호, 게임 종료 여부)
     def append_sample(self, state, goal_signal, action, reward, next_state, next_goal_signal, done):
         self.memory.append((state, goal_signal, action, reward, next_state, next_goal_signal, done))
 
@@ -216,8 +217,8 @@ if __name__ == '__main__':
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
-    # PPO 클래스를 agent로 정의 
-    agent = PPOAgent()
+    # HypernetworkAgent 클래스를 agent로 정의 
+    agent = HypernetworkAgent()
     actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
     for step in range(run_step + test_step):
         if step == run_step:
