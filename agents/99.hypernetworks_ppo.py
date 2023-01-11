@@ -1,5 +1,4 @@
 # 라이브러리 불러오기
-from turtle import shape
 import numpy as np
 import datetime
 import platform
@@ -20,12 +19,12 @@ GOAL_OBS = 0
 RAY_OBS = 1
 VECTOR_OBS = 2
 
-load_model = True
-train_mode = False
+load_model = False
+train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
-n_step = 2560
+n_step = 512
 batch_size = 256
 n_epoch = 3
 _lambda = 0.95
@@ -47,24 +46,11 @@ elif os_name == 'Darwin':
 
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-save_path = f"./saved_models/{game}/PPO/{date_time}"
-load_path = f"./saved_models/{game}/PPO/20220803093412"
+save_path = f"./saved_models/{game}/HyperPPO/{date_time}"
+load_path = f"./saved_models/{game}/HyperPPO/20220803093412"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# HyperActorCritic 클래스 -> Hypernetwork를 적용한 Actor, Critic Network 정의 
-class HyperActorCritic(torch.nn.Module):
-    def __init__(self, **kwargs):
-        super(HyperActorCritic, self).__init__(**kwargs)
-        self.d1 = torch.nn.Linear(state_size, 256)
-        self.d2 = torch.nn.Linear(256, 256)
-        self.hn = HyperNetwork(256, action_size, goal_size)
-        
-    def forward(self, x, h):
-        x = F.relu(self.d1(x))
-        x = F.relu(self.d2(x))
-        return self.hn(x, h)
 
 # HyperNetwork 클래스 -> HyperActorCritic의 마지막 Layer hn 생성 
 class HyperNetwork(torch.nn.Module):
@@ -93,9 +79,22 @@ class HyperNetwork(torch.nn.Module):
         result_v = torch.bmm(x, target_weights_v)
 
         return F.softmax(result_pi, dim=1), result_v.squeeze(dim=1)
+    
+# HyperActorCritic 클래스 -> Hypernetwork를 적용한 Actor, Critic Network 정의 
+class HyperActorCritic(torch.nn.Module):
+    def __init__(self, **kwargs):
+        super(HyperActorCritic, self).__init__(**kwargs)
+        self.d1 = torch.nn.Linear(state_size, 256)
+        self.d2 = torch.nn.Linear(256, 256)
+        self.hn = HyperNetwork(256, action_size, goal_size)
+        
+    def forward(self, x, h):
+        x = F.relu(self.d1(x))
+        x = F.relu(self.d2(x))
+        return self.hn(x, h)
 
-# HypernetworkAgent 클래스 -> Hypernetwork 알고리즘을 위한 다양한 함수 정의 
-class HypernetworkAgent:
+# HyperPPOAgent 클래스 -> HyperPPOAgent 알고리즘을 위한 다양한 함수 정의 
+class HyperPPOAgent:
     def __init__(self):
         self.network = HyperActorCritic().to(device)
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
@@ -217,8 +216,8 @@ if __name__ == '__main__':
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
-    # HypernetworkAgent 클래스를 agent로 정의 
-    agent = HypernetworkAgent()
+    # HyperPPOAgent 클래스를 agent로 정의 
+    agent = HyperPPOAgent()
     actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
     for step in range(run_step + test_step):
         if step == run_step:
