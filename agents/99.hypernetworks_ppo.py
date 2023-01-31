@@ -68,8 +68,8 @@ class HyperNetwork(torch.nn.Module):
     def forward(self, x, h):
         h = F.relu(self.d1(h))
         h = F.relu(self.d2(h))
-        target_weights_pi = F.relu(self.pi(h))
-        target_weights_v = F.relu(self.v(h))
+        target_weights_pi = F.tanh(self.pi(h))
+        target_weights_v = F.tanh(self.v(h))
 
         x = x.unsqueeze(dim=1)
         target_weights_pi = target_weights_pi.view(-1, self.input_unit_size, self.action_size)
