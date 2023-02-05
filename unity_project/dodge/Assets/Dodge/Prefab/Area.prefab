@@ -49,6 +49,12 @@ MonoBehaviour:
   Ball: {fileID: 7265080602506140503, guid: 80036db73d3bb674097e80327d20f5b3, type: 3}
   Env: {fileID: 5297255016053882040}
   Wall: {fileID: 5898007086536868330}
+  boardRadius: 6
+  ballSpeed: 3
+  ballNums: 15
+  ballRandom: 0.2
+  randomSeed: 77
+  agentSpeed: 30
 --- !u!1 &5297255016053882040
 GameObject:
   m_ObjectHideFlags: 0
@@ -388,7 +394,7 @@ Rigidbody:
   m_UseGravity: 1
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 110
+  m_Constraints: 116
   m_CollisionDetection: 0
 --- !u!114 &4433009349844771989
 MonoBehaviour:
@@ -405,7 +411,7 @@ MonoBehaviour:
   agentParameters:
     maxStep: 0
   hasUpgradedFromAgentParameters: 1
-  MaxStep: 0
+  MaxStep: 5000
   area: {fileID: 4045145684494788752}
   DecisionWaitingTime: 0.01
 --- !u!114 &5863059243124359149
@@ -422,7 +428,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_BrainParameters:
     VectorObservationSize: 122
-    NumStackedVectorObservations: 2
+    NumStackedVectorObservations: 1
     m_ActionSpec:
       m_NumContinuousActions: 0
       BranchSizes: 05000000

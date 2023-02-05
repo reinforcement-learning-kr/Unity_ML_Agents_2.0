@@ -11,6 +11,7 @@ TagManager:
   - symbol_X
   - tile
   - wall
+  - Undefined
   - ball
   layers:
   - Default

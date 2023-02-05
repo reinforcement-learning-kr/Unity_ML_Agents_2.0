@@ -7,8 +7,8 @@ public class DodgeScene : MonoBehaviour
 {
     public GameObject areaObj = null;
 
-    private int AreaNums = 8;
-    private int rows = 2;
+    private int AreaNums = 9;
+    private int rows = 3;
     private int interval = 16;
 
     EnvironmentParameters m_ResetParams = null;

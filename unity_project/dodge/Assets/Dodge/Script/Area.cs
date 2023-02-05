@@ -9,15 +9,16 @@ public class Area : MonoBehaviour
     public GameObject Ball;
     public GameObject Env;
     public GameObject Wall;
+    List<GameObject> balls = new List<GameObject>();
     List<BallScript> ballScripts = new List<BallScript>();
 
     [Header("--ResetParams--")]
-    private float boardRadius = 7.5f;
-    private float ballSpeed = 3.0f;
-    private int ballNums = 15;
-    private float ballRandom = 0.2f;
-    private int randomSeed = 77;
-    private float agentSpeed = 30f;
+    public float boardRadius = 6.0f;
+    public float ballSpeed = 3.0f;
+    public int ballNums = 15;
+    public float ballRandom = 0.2f;
+    public int randomSeed = 77;
+    public float agentSpeed = 30f;
 
     DodgeAgent agentScript = null;
 
@@ -34,23 +35,17 @@ public class Area : MonoBehaviour
     {
         for (int i = 0; i < ballNums; i++)
         {
-            GameObject ball = Instantiate(Ball, Env.transform);
-            BallScript script = ball.GetComponent<BallScript>();
+            GameObject b = Instantiate(Ball, Env.transform);
+            BallScript script = b.GetComponent<BallScript>();
             script.SetBall(Agent, ballSpeed, ballRandom, boardRadius);
+            balls.Add(b);
             ballScripts.Add(script);
-            script.gameObject.SetActive(false);
+            ballScripts[i].gameObject.SetActive(false);
         }
     }
 
     public void ResetEnv()
     {
-        if (ballScripts.Count == 0)
-            InitBall();
-
-        for (int i = 0; i < ballScripts.Count; i++)
-            if (null != ballScripts[i])
-                ballScripts[i].gameObject.SetActive(false);
-
         if (null == m_ResetParams)
             m_ResetParams = Academy.Instance.EnvironmentParameters;
 
@@ -61,20 +56,39 @@ public class Area : MonoBehaviour
         randomSeed = (int)m_ResetParams.GetWithDefault("randomSeed", randomSeed);
         agentSpeed = m_ResetParams.GetWithDefault("agentSpeed", agentSpeed);
 
+
+        if (ballNums != ballScripts.Count)
+        {
+            ballScripts.Clear();
+
+            for (int i = 0; i < balls.Count; i++)
+                Destroy(balls[i]);
+
+            balls.Clear();
+            InitBall();
+        }
+        else
+        {
+            for (int i = 0; i < ballNums; i++)
+            {
+                if (null != ballScripts[i])
+                    ballScripts[i].gameObject.SetActive(false);
+            }
+        }
+
         if (null == agentScript)
             agentScript = Agent.GetComponent<DodgeAgent>();
 
         agentScript.SetAgentSpeed(agentSpeed);
         Wall.transform.localScale = new Vector3(boardRadius, 10f, boardRadius);
 
-        for (int i = 0; i < ballScripts.Count; i++)
+        for (int i = 0; i < ballNums; i++)
         {
-            if(null != ballScripts[i])
-            {
+            if (null != ballScripts[i])
                 ballScripts[i].SetBall(Agent, ballSpeed, ballRandom, boardRadius);
+
+            if (null != ballScripts[i])
                 ballScripts[i].gameObject.SetActive(true);
-            }
         }
-        
     }
 }

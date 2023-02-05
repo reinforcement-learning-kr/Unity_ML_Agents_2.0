@@ -1,17 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Linq;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
-using System.Linq;
-
+using UnityEngine;
 
 public class DodgeAgent : Agent
 {
     public Area area;
-
-    Rigidbody RBAgent;
+    Rigidbody RbAgent;
     float speed = 30f;
     Vector3 centerPos = Vector3.zero;
 
@@ -20,8 +18,8 @@ public class DodgeAgent : Agent
 
     public override void Initialize()
     {
-		RBAgent = GetComponent<Rigidbody>();
-		centerPos = transform.position;
+		RbAgent = gameObject.GetComponent<Rigidbody>();
+		centerPos = gameObject.transform.position;
 
 		Academy.Instance.AgentPreStep += WaitTimeInference;
 	}
@@ -29,8 +27,11 @@ public class DodgeAgent : Agent
     public override void OnEpisodeBegin()
     {
 		transform.localPosition = centerPos;
+		RbAgent.velocity = Vector3.zero;
+		RbAgent.angularVelocity = Vector3.zero;
+
 		area.ResetEnv();
-	}
+    }
 
 	public void SetAgentSpeed(float speed_)
     {
@@ -43,39 +44,38 @@ public class DodgeAgent : Agent
 		Ray ray;
 
 		float angle;
-		int raycount = 40;
+		int rayCount = 40;
 		List<Vector3> debugRay = new List<Vector3>();
 
-        for (int i = 0; i < raycount; i++)
+		for(int i = 0; i < rayCount; i++)
         {
-			angle = i * 2.0f * Mathf.PI / raycount;
-			ray = new Ray(transform.position, new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)));
+			angle = i * 2.0f * Mathf.PI / rayCount;
+			ray = new Ray(gameObject.transform.position, new Vector3(Mathf.Cos(angle), 0, Mathf.Sin(angle)));
 
-
-            if (Physics.Raycast(ray, out hit))
+			if(Physics.Raycast(ray, out hit))
             {
 				sensor.AddObservation(hit.distance);
 
 				if (hit.collider.gameObject.name == "ArenaWalls")
                 {
-					sensor.AddObservation(Vector2.zero);
+					sensor.AddObservation(new Vector2());
                 }
 				else
                 {
 					Rigidbody rig = hit.collider.gameObject.GetComponent<Rigidbody>();
-					Vector2 vel = new Vector2(rig.velocity.x, rig.velocity.z);
+					var vel = new Vector2(rig.velocity.x, rig.velocity.z);
 					sensor.AddObservation(vel);
-				}
+                }
 
 				debugRay.Add(hit.point);
 			}
 		}
 
-		sensor.AddObservation(RBAgent.velocity.x);
-		sensor.AddObservation(RBAgent.velocity.z);
+		sensor.AddObservation(RbAgent.velocity.x);
+		sensor.AddObservation(RbAgent.velocity.z);
 
-		//for (int i = 0; i < debugRay.Count; i++)
-		//	Debug.DrawRay(transform.position, debugRay[i] - transform.position, Color.green);
+		for (int i = 0; i < debugRay.Count; i++)
+			Debug.DrawRay(gameObject.transform.position, debugRay[i] - gameObject.transform.position, Color.green);
 	}
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
@@ -83,7 +83,7 @@ public class DodgeAgent : Agent
 		var action = actionBuffers.DiscreteActions[0];
 		Vector3 force = Vector3.zero;
 
-		switch(action)
+        switch (action)
         {
 			case 1: force = new Vector3(-1, 0, 0) * speed; break;
 			case 2: force = new Vector3(0, 0, 1) * speed; break;
@@ -92,21 +92,22 @@ public class DodgeAgent : Agent
 			default: force = new Vector3(0, 0, 0) * speed; break;
 		}
 
-		RBAgent.velocity = force;
+		RbAgent.AddForce(force);
 
-		Collider[] blockTest = Physics.OverlapBox(transform.position, Vector3.one * 0.5f);
-		if (blockTest.Where(Col => Col.gameObject.CompareTag("ball")).ToArray().Length != 0)
+		Collider[] block = Physics.OverlapBox(gameObject.transform.position, Vector3.one * 0.5f);
+		
+		if (block.Where(Col => Col.gameObject.CompareTag("ball")).ToArray().Length != 0)
         {
 			SetReward(-1f);
 			EndEpisode();
         }
-		else
+        else
         {
 			SetReward(0.1f);
-		}
+        }
 	}
 
-	public override void Heuristic(in ActionBuffers actionsOut)
+    public override void Heuristic(in ActionBuffers actionsOut)
     {
 		var discreteActionsOut = actionsOut.DiscreteActions;
 		discreteActionsOut[0] = 0;
@@ -129,8 +130,7 @@ public class DodgeAgent : Agent
 		}
 	}
 
-
-	public void WaitTimeInference(int action)
+    public void WaitTimeInference(int action)
 	{
 		if (Academy.Instance.IsCommunicatorOn)
 		{
