@@ -3,10 +3,10 @@ behaviors:
     trainer_type: ppo
     hyperparameters:
       batch_size: 512
-      buffer_size: 2048
-      learning_rate: 0.0003
+      buffer_size: 4096
+      learning_rate: 0.0001
       beta: 0.01
-      epsilon: 0.6
+      epsilon: 0.1
       lambd: 0.95
       num_epoch: 3
       learning_rate_schedule: linear
@@ -21,12 +21,12 @@ behaviors:
         strength: 1.0
       rnd:
         gamma: 0.99
-        strength: 0.6
+        strength: 0.1
         network_settings:
           hidden_units: 128
-          num_layers: 2
+          num_layers: 3
         learning_rate: 0.0001
     keep_checkpoints: 5
-    max_steps: 6000000
+    max_steps: 3000000
     time_horizon: 256
     summary_freq: 30000
