@@ -22,6 +22,12 @@ dim2 = (floor((dim1[0] - 4)/2 + 1), floor((dim1[1] - 4)/2 + 1))
 state_total_size = (32*dim2[0]*dim2[1])
 action_size = 12
 
+action_branches = np.array([
+    [0,0,0], [0,0,1], [0,0,2], [0,1,0],
+    [0,1,1], [0,1,2], [1,0,0], [1,0,1],
+    [1,0,2], [1,1,0], [1,1,1], [1,1,2] 
+])
+
 load_model = False
 train_mode = True
 
@@ -42,10 +48,6 @@ test_step = 10000
 print_interval = 10
 save_interval = 100
 
-enum_act = [
-    [0,0,0], [0,0,1], [0,0,2], [0,1,0],
-    [0,1,1], [0,1,2], [1,0,0], [1,0,1],
-    [1,0,2], [1,1,0], [1,1,1], [1,1,2] ]
 
 # 유니티 환경 경로 
 game = "Maze"
@@ -142,11 +144,7 @@ class PPOAgent:
 
         # 네트워크 연산에 따라 행동 결정
         pi, _ = self.network(torch.FloatTensor(state).to(device))
-        tmpaction = torch.multinomial(pi, num_samples=1).cpu().numpy()
-        action = []
-        for tmp in tmpaction:
-            action.append(enum_act[tmp[0]])
-        action = np.array(action, dtype=int)
+        action = torch.multinomial(pi, num_samples=1).cpu().numpy()
         return action
 
     # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
@@ -278,8 +276,9 @@ if __name__ == '__main__':
             
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
+        branch_action = action_branches[action.squeeze()]
         action_tuple = ActionTuple()
-        action_tuple.add_discrete(action)
+        action_tuple.add_discrete(branch_action)
         env.set_actions(behavior_name, action_tuple)
         env.step()
 
