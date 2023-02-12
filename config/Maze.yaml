@@ -4,7 +4,7 @@ behaviors:
     hyperparameters:
       batch_size: 512
       buffer_size: 4096
-      learning_rate: 0.0001
+      learning_rate: 0.0003
       beta: 0.01
       epsilon: 0.1
       lambd: 0.95
@@ -13,7 +13,7 @@ behaviors:
     network_settings:
       normalize: true
       hidden_units: 512
-      num_layers: 3
+      num_layers: 2
       vis_encode_type: simple
     reward_signals:
       extrinsic:
@@ -24,9 +24,9 @@ behaviors:
         strength: 0.1
         network_settings:
           hidden_units: 128
-          num_layers: 3
+          num_layers: 2
         learning_rate: 0.0001
     keep_checkpoints: 5
     max_steps: 3000000
     time_horizon: 256
-    summary_freq: 30000
+    summary_freq: 50000
