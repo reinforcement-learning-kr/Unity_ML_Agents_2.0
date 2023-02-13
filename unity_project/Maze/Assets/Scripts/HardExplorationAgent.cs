@@ -3,12 +3,14 @@ using Unity.MLAgents;
 using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
 using System;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
 public class HardExplorationAgent : Agent
 {
     Rigidbody mAgentRb;
+    public int keyState;
 
     public GameObject key1;
     public GameObject key2;
@@ -17,33 +19,19 @@ public class HardExplorationAgent : Agent
     public GameObject gate1;
     public GameObject gate2;
 
-    public float speed = 1f;
+    public float speed = 3f;
     public float rotationSpeed = 150f;
     public float jumpForce = 7.5f;
 
-    public bool canJump = false;
-
     public GameObject walls;
 
-    private List<GameObject> room1_walls = new List<GameObject>();
-    private List<GameObject> room2_walls = new List<GameObject>();
+    public bool canJump = false;
 
     public override void Initialize()
     {
-        mAgentRb = GetComponent<Rigidbody>();
-
-        room1_walls.Add(walls.transform.GetChild(0).gameObject);
-        room1_walls.Add(walls.transform.GetChild(1).gameObject);
-        room1_walls.Add(walls.transform.GetChild(2).gameObject);
-        room1_walls.Add(walls.transform.GetChild(3).gameObject);
-        room1_walls.Add(walls.transform.GetChild(4).gameObject);
-
-        room2_walls.Add(walls.transform.GetChild(2).gameObject);
-        room2_walls.Add(walls.transform.GetChild(3).gameObject);
-        room2_walls.Add(walls.transform.GetChild(5).gameObject);
-        room2_walls.Add(walls.transform.GetChild(6).gameObject);
-        room2_walls.Add(walls.transform.GetChild(7).gameObject);
-        room2_walls.Add(walls.transform.GetChild(8).gameObject);
+        base.Initialize();
+        mAgentRb = this.gameObject.GetComponent<Rigidbody>();
+        Academy.Instance.AgentPreStep += WaitTimeInference;
     }
 
     public override void OnEpisodeBegin()
@@ -53,9 +41,7 @@ public class HardExplorationAgent : Agent
         mAgentRb.velocity = Vector3.zero;
         mAgentRb.angularVelocity = Vector3.zero;
 
-        key1.transform.localPosition = new Vector3(8.5f, 1, -8.5f);
-        key2.transform.localPosition = new Vector3(7.91f, 3, 4.35f);
-        key3.transform.localPosition = new Vector3(-4f, 1, -3f);
+        keyState = 0;
 
         key1.SetActive(true);
         key2.SetActive(true);
@@ -63,17 +49,6 @@ public class HardExplorationAgent : Agent
 
         gate1.SetActive(true);
         gate2.SetActive(true);
-
-        // reset color
-        foreach (GameObject wall in room1_walls)
-        {
-            wall.GetComponent<Renderer>().material.color = Color.white;
-        }
-
-        foreach (GameObject wall in room2_walls)
-        {
-            wall.GetComponent<Renderer>().material.color = Color.white;
-        }
     }
 
     public void MoveAgent(ActionBuffers actionBuffers)
@@ -84,10 +59,19 @@ public class HardExplorationAgent : Agent
         var rotateDir = Vector3.zero;
 
         dirToGo = transform.forward * discreteActions[1];
-        rotateDir = -transform.up * discreteActions[2];
-        
+        switch(discreteActions[2])
+        {
+            case 0:
+                break;
+            case 1:
+                rotateDir = -transform.up * discreteActions[2];
+                break;
+            case 2:
+                rotateDir = transform.up * discreteActions[2];
+                break;
+        }
+
         mAgentRb.transform.Translate(dirToGo * speed * Time.fixedDeltaTime, Space.World);
-        
         transform.Rotate(rotateDir, Time.fixedDeltaTime * rotationSpeed);
 
         if (discreteActions[0] == 1 && canJump)
@@ -100,40 +84,38 @@ public class HardExplorationAgent : Agent
     public override void OnActionReceived(ActionBuffers actions)
     {
         MoveAgent(actions);
-        
-        if (transform.localPosition.y < -1f)
-        {
-            SetReward(-1f);
-            EndEpisode();
-        }
-    }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.gameObject.CompareTag("key1"))
+        switch (keyState)
         {
-            key1.SetActive(false);
-            gate1.SetActive(false);
-
-            foreach (GameObject wall in room1_walls)
-            {
-                wall.GetComponent<Renderer>().material.color = new Color(255, 0, 0);
-            }
-        }
-        else if (other.gameObject.CompareTag("key2"))
-        {
-            key2.SetActive(false);
-            gate2.SetActive(false);
-
-            foreach (GameObject wall in room2_walls)
-            {
-                wall.GetComponent<Renderer>().material.color = new Color(255, 150, 0);
-            }
-        }
-        else if (other.gameObject.CompareTag("key3"))
-        {
-            SetReward(1f);
-            EndEpisode();
+            case 0:
+                {
+                    if (Vector3.Distance(key1.transform.position, transform.position) <= 1.5f)
+                    {
+                        key1.SetActive(false);
+                        gate1.SetActive(false);
+                        keyState = 1;
+                    }
+                }
+                break;
+            case 1:
+                {
+                    if (Vector3.Distance(key2.transform.position, transform.position) <= 1.5f)
+                    {
+                        key2.SetActive(false);
+                        gate2.SetActive(false);
+                        keyState = 2;
+                    }
+                }
+                break;
+            case 2:
+                {
+                    if (Vector3.Distance(key3.transform.position, transform.position) <= 1.5f)
+                    {
+                        SetReward(1f);
+                        EndEpisode();
+                    }
+                }
+                break;
         }
     }
 
@@ -163,7 +145,30 @@ public class HardExplorationAgent : Agent
         }
         if (Input.GetKey(KeyCode.E))
         {
-            discreteActionsOut[2] = -1;
+            discreteActionsOut[2] = 2;
+        }
+    }
+
+    public float DecisionWaitingTime = 5f;
+    float m_currentTime = 0f;
+
+    public void WaitTimeInference(int action)
+    {
+        if (Academy.Instance.IsCommunicatorOn)
+        {
+            RequestDecision();
+        }
+        else
+        {
+            if (m_currentTime >= DecisionWaitingTime)
+            {
+                m_currentTime = 0f;
+                RequestDecision();
+            }
+            else
+            {
+                m_currentTime += Time.fixedDeltaTime;
+            }
         }
     }
 }

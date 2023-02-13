@@ -3,6 +3,7 @@ from turtle import st
 import numpy as np
 import datetime
 import platform
+from math import floor
 import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
@@ -12,31 +13,31 @@ from mlagents_envs.side_channel.engine_configuration_channel\
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
-state_size = 172
-action_size = 5
+state_size = [3*2, 32, 32]
+action_size = 12
 
 load_model = False
 train_mode = True
 
 rnd_learning_rate = 1e-4
-rnd_strength = 0.01
+rnd_strength = 1e-1
 
 discount_factor = 0.99
 learning_rate = 3e-4
-n_step = 2048
-batch_size = 128
+n_step = 4096
+batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
 
-run_step = 500000 if train_mode else 0
+run_step = 5000000 if train_mode else 0
 test_step = 10000
 
 print_interval = 10
 save_interval = 100
 
 # 유니티 환경 경로 
-game = "Pyramids"
+game = "Maze"
 os_name = platform.system()
 if os_name == 'Windows':
     env_name = f"../envs/{game}_{os_name}/{game}"
@@ -55,29 +56,58 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class PPONetwork(torch.nn.Module):
     def __init__(self, **kwargs):
         super(PPONetwork, self).__init__(**kwargs)
-        self.d1 = torch.nn.Linear(state_size, 512)
+
+        self.conv1 = torch.nn.Conv2d(in_channels=state_size[0], out_channels=16,
+                                     kernel_size=8, stride=4)
+        dim1 = (floor((state_size[1] - 8)/4 + 1),floor((state_size[2] - 8)/4 + 1))
+        self.conv2 = torch.nn.Conv2d(in_channels=16, out_channels=32,
+                                     kernel_size=4, stride=2)
+        dim2 = (floor((dim1[0] - 4)/2 + 1), floor((dim1[1] - 4)/2 + 1))
+        self.flat = torch.nn.Flatten()
+        self.i = torch.nn.Linear(32*dim2[0]*dim2[1], 512)
+        self.d1 = torch.nn.Linear(512, 512)
         self.d2 = torch.nn.Linear(512, 512)
+        #self.d3 = torch.nn.Linear(512, 512)
         self.pi = torch.nn.Linear(512, action_size)
         self.v = torch.nn.Linear(512, 1)
         
     def forward(self, x):
-        x = F.relu(self.d1(x))
-        x = F.relu(self.d2(x))
+        x = x.permute(0, 3, 1, 2)
+        x = F.leaky_relu(self.conv1(x))
+        x = F.leaky_relu(self.conv2(x))
+        x = F.leaky_relu(self.flat(x))
+        x = F.leaky_relu(self.i(x))
+        x = torch.sigmoid(self.d1(x))
+        x = torch.sigmoid(self.d2(x))
+        #x = torch.sigmoid(self.d3(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
-
+    
 # RNDNetwork 클래스 
 class RNDNetwork(torch.nn.Module):
     def __init__(self, **kwargs):
         super(RNDNetwork, self).__init__(**kwargs)
-        self.d1 = torch.nn.Linear(state_size, 64)
-        self.d2 = torch.nn.Linear(64, 64)
-        self.d3 = torch.nn.Linear(64, 64)
-        self.v = torch.nn.Linear(64, 1)
+        self.conv1 = torch.nn.Conv2d(in_channels=state_size[0], out_channels=16,
+                                     kernel_size=8, stride=4)
+        dim1 = (floor((state_size[1] - 8)/4 + 1),floor((state_size[2] - 8)/4 + 1))
+        self.conv2 = torch.nn.Conv2d(in_channels=16, out_channels=32,
+                                     kernel_size=4, stride=2)
+        dim2 = (floor((dim1[0] - 4)/2 + 1), floor((dim1[1] - 4)/2 + 1))
+        self.flat = torch.nn.Flatten()
+        self.i = torch.nn.Linear(32*dim2[0]*dim2[1], 128)
+        self.d1 = torch.nn.Linear(128, 128)
+        self.d2 = torch.nn.Linear(128, 128)
+        #self.d3 = torch.nn.Linear(128, 128)
+        self.v = torch.nn.Linear(128, 1)
 
     def forward(self, x):
-        x = self.d1(x)
-        x = self.d2(x)
-        x = self.d3(x)
+        x = x.permute(0, 3, 1, 2)
+        x = F.leaky_relu(self.conv1(x))
+        x = F.leaky_relu(self.conv2(x))
+        x = F.leaky_relu(self.flat(x))
+        x = F.leaky_relu(self.i(x))
+        x = torch.sigmoid(self.d1(x))
+        x = torch.sigmoid(self.d2(x))
+        #x = torch.sigmoid(self.d3(x))
         return self.v(x)
 
 # PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의 
@@ -87,10 +117,10 @@ class PPOAgent:
         self.random_network = RNDNetwork().to(device)
         self.preditor_network = RNDNetwork().to(device)
         self.rnd_optimizer = torch.optim.Adam(self.preditor_network.parameters(), lr=rnd_learning_rate)
-        self.rnd_memory = list()
 
         self.network = PPONetwork().to(device)
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
+        self.scheduler = torch.optim.lr_scheduler.ExponentialLR(self.optimizer, gamma=0.99)
         self.memory = list()
         self.writer = SummaryWriter(save_path)
 
@@ -102,9 +132,8 @@ class PPOAgent:
 
     # 정책을 통해 행동 결정
     def get_action(self, state, training=True):
-        #  네트워크 모드 설정
+        # 네트워크 모드 설정
         self.network.train(training)
-        self.preditor_network.train(training)
 
         # 네트워크 연산에 따라 행동 결정
         pi, _ = self.network(torch.FloatTensor(state).to(device))
@@ -114,14 +143,11 @@ class PPOAgent:
     # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
     def append_sample(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
-        
-    # RND 리플레이 메모리에 데이터 추가 (다음 상태)
-    def append_rnd_sample(self, sample):
-        self.rnd_memory.append(sample)
 
     # 학습 수행
     def train_model(self):
         self.network.train()
+        self.preditor_network.train()
 
         state      = np.stack([m[0] for m in self.memory], axis=0)
         action     = np.stack([m[1] for m in self.memory], axis=0)
@@ -132,17 +158,18 @@ class PPOAgent:
 
         state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
                                                         [state, action, reward, next_state, done])
-        
+                
         # RND에 대한 내적 보상 계산
         with torch.no_grad():
-            target = agent.random_network(next_state)
-            prediction = agent.preditor_network(next_state)
-            rnd_reward = torch.sum((prediction - target) ** 2, dim = 1)
-            rnd_reward = rnd_reward.unsqueeze(dim = 1)
+            target = self.random_network(next_state)
+        prediction = self.preditor_network(next_state)
+        rnd_reward = torch.sum((prediction - target) ** 2, dim = 1)
+        rnd_loss = torch.mean(rnd_reward)
+        rnd_reward = rnd_reward.unsqueeze(dim = 1)
 
         # RND 내적 보상을 더해서 최종 보상 계산
+        #print(rnd_strength * torch.mean(rnd_reward))
         reward = reward + rnd_strength * rnd_reward
-        print(rnd_reward)
 
         # prob_old, adv, ret 계산 
         with torch.no_grad():
@@ -156,7 +183,12 @@ class PPOAgent:
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
             adv = adv.transpose(0,1).contiguous().view(-1, 1)
+            
             ret = adv + value
+
+        self.rnd_optimizer.zero_grad()
+        rnd_loss.backward()
+        self.rnd_optimizer.step()
 
         # 학습 이터레이션 시작
         actor_losses, critic_losses = [], []
@@ -172,13 +204,13 @@ class PPOAgent:
                 pi, value = self.network(_state)
                 prob = pi.gather(1, _action.long())
 
-                #정책신경망 손실함수 계산
+                # 정책신경망 손실함수 계산
                 ratio = prob / (_prob_old + 1e-7)
                 surr1 = ratio * _adv
                 surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * _adv
                 actor_loss = -torch.min(surr1, surr2).mean()
 
-                #가치신경망 손실함수 계산
+                # 가치신경망 손실함수 계산
                 critic_loss = F.mse_loss(value, _ret).mean()
 
                 total_loss = actor_loss + critic_loss
@@ -189,25 +221,9 @@ class PPOAgent:
 
                 actor_losses.append(actor_loss.item())
                 critic_losses.append(critic_loss.item())
-
-        return np.mean(actor_losses), np.mean(critic_losses)
-
-    # RND 예측 네트워크 학습
-    def train_rnd_model(self):
-        self.preditor_network.train()
-
-        state = torch.FloatTensor(self.rnd_memory).to(device)
-        self.rnd_memory.clear()
-
-        with torch.no_grad():
-            target = self.random_network(state)
-        prediction = self.preditor_network(state)
-        loss = torch.mean(torch.sum((prediction - target) ** 2, dim=1))
-        self.rnd_optimizer.zero_grad()
-        loss.backward()
-        self.rnd_optimizer.step()
-
-        return np.mean(loss.item())
+        
+        self.scheduler.step()
+        return np.mean(actor_losses), np.mean(critic_losses), np.mean(rnd_loss.item())
 
     # 네트워크 모델 저장
     def save_model(self):
@@ -237,7 +253,7 @@ if __name__ == '__main__':
     # 유니티 behavior 설정 
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
-    engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
+    engine_configuration_channel.set_configuration_parameters(time_scale=15.0)
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
@@ -252,59 +268,43 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        state = [[0 for _ in range(state_size)] for _ in range(num_worker)]
-        action = [0 for _ in range(num_worker)]
-        next_state = [[0 for _ in range(state_size)] for _ in range(num_worker)]
-        reward = [0 for _ in range(num_worker)]
-        done = [False for _ in range(num_worker)]
-        notyet = [True for _ in range(num_worker)]
+        action_branches = np.array([
+            [0,0,0], [0,0,1], [0,0,2], [0,1,0],
+            [0,1,1], [0,1,2], [1,0,0], [1,0,1],
+            [1,0,2], [1,1,0], [1,1,1], [1,1,2] 
+        ])
         
-        for id in dec.agent_id:
-            _id = list(dec.agent_id).index(id)
-            state[id] = np.concatenate([dec.obs[0][_id], dec.obs[1][_id],  dec.obs[2][_id],  dec.obs[3][_id]], axis=-1)
-            tmpaction = agent.get_action([state[id]])
-            action_tuple = ActionTuple()
-            action_tuple.add_discrete(tmpaction)
-            action[id] = tmpaction[0]
-            env.set_action_for_agent(behavior_name, id, action_tuple)
-            notyet[id] = False
+        state = dec.obs[0]
+        action = agent.get_action(state, train_mode)
+        branch_action = action_branches[action.squeeze()]
+
+        action_tuple = ActionTuple()
+        action_tuple.add_discrete(branch_action)
+        env.set_actions(behavior_name, action_tuple)
         env.step()
 
         # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
-        for id in dec.agent_id:
-            _id = list(dec.agent_id).index(id)
-            next_state[id] = np.concatenate([dec.obs[0][_id], dec.obs[1][_id],  dec.obs[2][_id],  dec.obs[3][_id]], axis=-1)
-            reward[id] = dec.reward[id]
-
+        done = [False] * num_worker
+        next_state = dec.obs[0]
+        reward = dec.reward
         for id in term.agent_id:
             _id = list(term.agent_id).index(id)
             done[id] = True
-            next_state[id] = np.concatenate([term.obs[0][_id], term.obs[1][_id], term.obs[2][_id], term.obs[3][_id]], axis= -1)
+            next_state[id] = term.obs[0][_id]
             reward[id] = term.reward[_id]
         score += sum(reward)/len(reward)
 
         if train_mode:
             for id in range(num_worker):
-                if notyet[id]: continue
-                agent.append_rnd_sample(next_state[id])
                 agent.append_sample(state[id], action[id], [reward[id]], next_state[id], [done[id]])
 
                 # 학습수행  
                 if len(agent.memory) / num_worker == n_step:
-                    rnd_loss = agent.train_rnd_model()
-                    actor_loss, critic_loss = agent.train_model()
-                    rnd_losses.append(rnd_loss)
+                    actor_loss, critic_loss, rnd_loss = agent.train_model()
                     actor_losses.append(actor_loss)
                     critic_losses.append(critic_loss)
-            '''
-            if (step+1) % n_step == 0:
-                rnd_loss = agent.train_rnd_model()
-                actor_loss, critic_loss = agent.train_model()
-                rnd_losses.append(rnd_loss)
-                actor_losses.append(actor_loss)
-                critic_losses.append(critic_loss)
-            '''
+                    rnd_losses.append(rnd_loss)
 
         if done[0]:
             episode +=1

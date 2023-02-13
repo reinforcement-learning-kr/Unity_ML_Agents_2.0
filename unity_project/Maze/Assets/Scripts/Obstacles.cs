@@ -8,7 +8,7 @@ public class Obstacles : MonoBehaviour
     {
         if (collision.gameObject.tag == "Player")
         {
-            collision.gameObject.GetComponent<HardExplorationAgent>().EndEpisode();
+            // collision.gameObject.GetComponent<HardExplorationAgent>().EndEpisode();
         }
     }
 }

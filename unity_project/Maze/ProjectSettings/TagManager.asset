@@ -18,6 +18,7 @@ TagManager:
   - buttonbox
   - exitborder
   - stairs
+  - obstacle
   layers:
   - Default
   - TransparentFX
