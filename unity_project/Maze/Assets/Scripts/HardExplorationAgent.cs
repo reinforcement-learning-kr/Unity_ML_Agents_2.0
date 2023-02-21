@@ -19,9 +19,9 @@ public class HardExplorationAgent : Agent
     public GameObject gate1;
     public GameObject gate2;
 
-    public float speed = 3f;
-    public float rotationSpeed = 150f;
-    public float jumpForce = 7.5f;
+    public float speed = 9f;
+    public float rotationSpeed = 450f;
+    public float jumpForce = 5.2f;
 
     public GameObject walls;
 
@@ -76,8 +76,8 @@ public class HardExplorationAgent : Agent
 
         if (discreteActions[0] == 1 && canJump)
         {
-            mAgentRb.AddForce(transform.up * jumpForce, ForceMode.VelocityChange);
             canJump = false;
+            mAgentRb.AddForce(transform.up * jumpForce, ForceMode.VelocityChange);
         }
     }
 
@@ -149,7 +149,7 @@ public class HardExplorationAgent : Agent
         }
     }
 
-    public float DecisionWaitingTime = 5f;
+    float DecisionWaitingTime = 0.02f;
     float m_currentTime = 0f;
 
     public void WaitTimeInference(int action)

@@ -19,6 +19,7 @@ TagManager:
   - exitborder
   - stairs
   - obstacle
+  - altar
   layers:
   - Default
   - TransparentFX

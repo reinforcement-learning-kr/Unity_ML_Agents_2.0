@@ -268,15 +268,26 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        action_branches = np.array([
+        
+        #action_branches = np.array([
+        #    [0,0,0], [0,0,1], [0,0,2], [0,1,0],
+        #    [0,1,1], [0,1,2], [1,0,0], [1,0,1],
+        #    [1,0,2], [1,1,0], [1,1,1], [1,1,2] 
+        #])
+        action_branches = [
             [0,0,0], [0,0,1], [0,0,2], [0,1,0],
             [0,1,1], [0,1,2], [1,0,0], [1,0,1],
             [1,0,2], [1,1,0], [1,1,1], [1,1,2] 
-        ])
+        ]
         
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
-        branch_action = action_branches[action.squeeze()]
+        #branch_action = action_branches[action.squeeze()]
+
+        branch_action = []
+        for tmp in action:
+            branch_action.append(action_branches[tmp[0]])
+        branch_action = np.array(branch_action, dtype=int)
 
         action_tuple = ActionTuple()
         action_tuple.add_discrete(branch_action)
