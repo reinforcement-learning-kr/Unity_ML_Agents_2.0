@@ -59,26 +59,26 @@ public class HardExplorationAgent : Agent
         var rotateDir = Vector3.zero;
 
         dirToGo = transform.forward * discreteActions[1];
-        switch(discreteActions[2])
+        switch (discreteActions[2])
         {
             case 0:
                 break;
             case 1:
-                rotateDir = -transform.up * discreteActions[2];
+                rotateDir = -transform.up;
                 break;
             case 2:
-                rotateDir = transform.up * discreteActions[2];
+                rotateDir = transform.up;
                 break;
         }
-
-        mAgentRb.transform.Translate(dirToGo * speed * Time.fixedDeltaTime, Space.World);
-        transform.Rotate(rotateDir, Time.fixedDeltaTime * rotationSpeed);
 
         if (discreteActions[0] == 1 && canJump)
         {
             canJump = false;
             mAgentRb.AddForce(transform.up * jumpForce, ForceMode.VelocityChange);
         }
+
+        mAgentRb.transform.Translate(dirToGo * speed * Time.fixedDeltaTime, Space.World);
+        transform.Rotate(rotateDir, Time.fixedDeltaTime * rotationSpeed);
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -135,10 +135,10 @@ public class HardExplorationAgent : Agent
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var discreteActionsOut = actionsOut.DiscreteActions;
-        
+
         discreteActionsOut[0] = Input.GetKey(KeyCode.Space) ? 1 : 0;
         discreteActionsOut[1] = Input.GetKey(KeyCode.W) ? 1 : 0;
-        
+
         if (Input.GetKey(KeyCode.Q))
         {
             discreteActionsOut[2] = 1;

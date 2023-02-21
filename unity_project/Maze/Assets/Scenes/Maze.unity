@@ -792,7 +792,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 23243985}
   serializedVersion: 2
-  m_Mass: 10
+  m_Mass: 1
   m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -1759,7 +1759,6 @@ GameObject:
   - component: {fileID: 112526170}
   - component: {fileID: 112526169}
   - component: {fileID: 112526168}
-  - component: {fileID: 112526171}
   m_Layer: 0
   m_Name: Altar
   m_TagString: altar
@@ -1844,22 +1843,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 112526166}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!54 &112526171
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 112526166}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!1 &137271030
 GameObject:
   m_ObjectHideFlags: 0
@@ -4102,7 +4085,6 @@ GameObject:
   - component: {fileID: 265166409}
   - component: {fileID: 265166408}
   - component: {fileID: 265166407}
-  - component: {fileID: 265166406}
   m_Layer: 0
   m_Name: Stairs
   m_TagString: stairs
@@ -4124,22 +4106,6 @@ Transform:
   m_Father: {fileID: 104713449}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &265166406
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 265166404}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &265166407
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4151,7 +4117,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.9, y: 1, z: 0.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &265166408
 MeshRenderer:
@@ -4347,7 +4313,6 @@ GameObject:
   - component: {fileID: 287350718}
   - component: {fileID: 287350717}
   - component: {fileID: 287350716}
-  - component: {fileID: 287350715}
   m_Layer: 0
   m_Name: Stairs
   m_TagString: stairs
@@ -4369,22 +4334,6 @@ Transform:
   m_Father: {fileID: 81045247}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &287350715
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 287350713}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &287350716
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4396,7 +4345,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.9, y: 1, z: 0.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &287350717
 MeshRenderer:
@@ -4652,7 +4601,6 @@ GameObject:
   - component: {fileID: 310083469}
   - component: {fileID: 310083468}
   - component: {fileID: 310083467}
-  - component: {fileID: 310083466}
   m_Layer: 0
   m_Name: Altar
   m_TagString: altar
@@ -4674,22 +4622,6 @@ Transform:
   m_Father: {fileID: 1762495215}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &310083466
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 310083464}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &310083467
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7616,7 +7548,6 @@ GameObject:
   - component: {fileID: 545084561}
   - component: {fileID: 545084560}
   - component: {fileID: 545084559}
-  - component: {fileID: 545084558}
   m_Layer: 0
   m_Name: Stairs
   m_TagString: stairs
@@ -7638,22 +7569,6 @@ Transform:
   m_Father: {fileID: 2010952790}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &545084558
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 545084556}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &545084559
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7665,7 +7580,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.9, y: 1, z: 0.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &545084560
 MeshRenderer:
@@ -8147,7 +8062,6 @@ GameObject:
   - component: {fileID: 567712856}
   - component: {fileID: 567712855}
   - component: {fileID: 567712854}
-  - component: {fileID: 567712853}
   m_Layer: 0
   m_Name: Stairs
   m_TagString: stairs
@@ -8169,22 +8083,6 @@ Transform:
   m_Father: {fileID: 689174492}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &567712853
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 567712851}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &567712854
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -8196,7 +8094,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.9, y: 1, z: 0.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &567712855
 MeshRenderer:
@@ -9066,7 +8964,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 676882880}
   serializedVersion: 2
-  m_Mass: 10
+  m_Mass: 1
   m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -9775,7 +9673,6 @@ GameObject:
   - component: {fileID: 714100695}
   - component: {fileID: 714100694}
   - component: {fileID: 714100693}
-  - component: {fileID: 714100692}
   m_Layer: 0
   m_Name: Altar
   m_TagString: altar
@@ -9797,22 +9694,6 @@ Transform:
   m_Father: {fileID: 1259992901}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &714100692
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 714100690}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &714100693
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11296,7 +11177,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 851892327}
   serializedVersion: 2
-  m_Mass: 10
+  m_Mass: 1
   m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -12679,7 +12560,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 942262934}
   serializedVersion: 2
-  m_Mass: 10
+  m_Mass: 1
   m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -13194,7 +13075,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 972661964}
   serializedVersion: 2
-  m_Mass: 10
+  m_Mass: 1
   m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -13967,7 +13848,6 @@ GameObject:
   - component: {fileID: 1043511704}
   - component: {fileID: 1043511703}
   - component: {fileID: 1043511702}
-  - component: {fileID: 1043511705}
   m_Layer: 0
   m_Name: Stairs
   m_TagString: stairs
@@ -14000,7 +13880,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.9, y: 1, z: 0.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1043511703
 MeshRenderer:
@@ -14052,22 +13932,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1043511700}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!54 &1043511705
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1043511700}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!1 &1061355984
 GameObject:
   m_ObjectHideFlags: 0
@@ -14444,7 +14308,6 @@ GameObject:
   - component: {fileID: 1112932710}
   - component: {fileID: 1112932709}
   - component: {fileID: 1112932708}
-  - component: {fileID: 1112932707}
   m_Layer: 0
   m_Name: Altar
   m_TagString: altar
@@ -14466,22 +14329,6 @@ Transform:
   m_Father: {fileID: 689174492}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &1112932707
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1112932705}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &1112932708
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -14654,7 +14501,6 @@ GameObject:
   - component: {fileID: 1123791548}
   - component: {fileID: 1123791547}
   - component: {fileID: 1123791546}
-  - component: {fileID: 1123791545}
   m_Layer: 0
   m_Name: Altar
   m_TagString: altar
@@ -14676,22 +14522,6 @@ Transform:
   m_Father: {fileID: 2010952790}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &1123791545
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1123791543}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &1123791546
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -16659,7 +16489,6 @@ GameObject:
   - component: {fileID: 1344638410}
   - component: {fileID: 1344638409}
   - component: {fileID: 1344638408}
-  - component: {fileID: 1344638407}
   m_Layer: 0
   m_Name: Stairs
   m_TagString: stairs
@@ -16681,22 +16510,6 @@ Transform:
   m_Father: {fileID: 1952339800}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &1344638407
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1344638405}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &1344638408
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -16708,7 +16521,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.9, y: 1, z: 0.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1344638409
 MeshRenderer:
@@ -16934,7 +16747,6 @@ GameObject:
   - component: {fileID: 1385285491}
   - component: {fileID: 1385285490}
   - component: {fileID: 1385285489}
-  - component: {fileID: 1385285488}
   m_Layer: 0
   m_Name: Altar
   m_TagString: altar
@@ -16956,22 +16768,6 @@ Transform:
   m_Father: {fileID: 81045247}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &1385285488
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1385285486}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &1385285489
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -17379,7 +17175,6 @@ GameObject:
   - component: {fileID: 1409493973}
   - component: {fileID: 1409493972}
   - component: {fileID: 1409493971}
-  - component: {fileID: 1409493970}
   m_Layer: 0
   m_Name: Stairs
   m_TagString: stairs
@@ -17401,22 +17196,6 @@ Transform:
   m_Father: {fileID: 1762495215}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &1409493970
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1409493968}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &1409493971
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -17428,7 +17207,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.9, y: 1, z: 0.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1409493972
 MeshRenderer:
@@ -18806,7 +18585,6 @@ GameObject:
   - component: {fileID: 1564185517}
   - component: {fileID: 1564185516}
   - component: {fileID: 1564185515}
-  - component: {fileID: 1564185514}
   m_Layer: 0
   m_Name: Altar
   m_TagString: altar
@@ -18828,22 +18606,6 @@ Transform:
   m_Father: {fileID: 983458523}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &1564185514
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1564185512}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &1564185515
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -20073,7 +19835,6 @@ GameObject:
   - component: {fileID: 1646593488}
   - component: {fileID: 1646593487}
   - component: {fileID: 1646593486}
-  - component: {fileID: 1646593485}
   m_Layer: 0
   m_Name: Stairs
   m_TagString: stairs
@@ -20095,22 +19856,6 @@ Transform:
   m_Father: {fileID: 983458523}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &1646593485
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1646593483}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &1646593486
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -20122,7 +19867,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.9, y: 1, z: 0.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &1646593487
 MeshRenderer:
@@ -20767,7 +20512,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1700797626}
   serializedVersion: 2
-  m_Mass: 10
+  m_Mass: 1
   m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -21605,7 +21350,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1763306187}
   serializedVersion: 2
-  m_Mass: 10
+  m_Mass: 1
   m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -22185,7 +21930,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1797074079}
   serializedVersion: 2
-  m_Mass: 10
+  m_Mass: 1
   m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -25695,7 +25440,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2088787265}
   serializedVersion: 2
-  m_Mass: 10
+  m_Mass: 1
   m_Drag: 0.5
   m_AngularDrag: 0.05
   m_UseGravity: 1
@@ -25875,7 +25620,6 @@ GameObject:
   - component: {fileID: 2100440773}
   - component: {fileID: 2100440772}
   - component: {fileID: 2100440771}
-  - component: {fileID: 2100440770}
   m_Layer: 0
   m_Name: Altar
   m_TagString: altar
@@ -25897,22 +25641,6 @@ Transform:
   m_Father: {fileID: 104713449}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &2100440770
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2100440768}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &2100440771
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -25988,7 +25716,6 @@ GameObject:
   - component: {fileID: 2102019290}
   - component: {fileID: 2102019289}
   - component: {fileID: 2102019288}
-  - component: {fileID: 2102019287}
   m_Layer: 0
   m_Name: Altar
   m_TagString: altar
@@ -26010,22 +25737,6 @@ Transform:
   m_Father: {fileID: 1952339800}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &2102019287
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2102019285}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &2102019288
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -26421,7 +26132,6 @@ GameObject:
   - component: {fileID: 2130710827}
   - component: {fileID: 2130710826}
   - component: {fileID: 2130710825}
-  - component: {fileID: 2130710824}
   m_Layer: 0
   m_Name: Stairs
   m_TagString: stairs
@@ -26443,22 +26153,6 @@ Transform:
   m_Father: {fileID: 1259992901}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!54 &2130710824
-Rigidbody:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2130710822}
-  serializedVersion: 2
-  m_Mass: 100
-  m_Drag: 10
-  m_AngularDrag: 0.05
-  m_UseGravity: 1
-  m_IsKinematic: 0
-  m_Interpolate: 0
-  m_Constraints: 126
-  m_CollisionDetection: 0
 --- !u!65 &2130710825
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -26470,7 +26164,7 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 0.9, y: 1, z: 0.9}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!23 &2130710826
 MeshRenderer:
