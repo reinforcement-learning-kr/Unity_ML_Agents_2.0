@@ -1,5 +1,4 @@
 # 라이브러리 불러오기
-from turtle import shape
 import numpy as np
 import datetime
 import platform
