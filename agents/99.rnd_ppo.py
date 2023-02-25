@@ -12,7 +12,7 @@ from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
 state_size = [3*2, 32, 32]
-action_size = 12
+action_size = 4
 
 load_model = False
 train_mode = True
@@ -28,6 +28,7 @@ epsilon = 0.2
 rnd_learning_rate = 1e-4
 rnd_strength = 0.5
 rnd_discount_factor = 0.99
+rnd_feature_size = 128
 
 run_step = 5000000 if train_mode else 0
 test_step = 10000
@@ -104,14 +105,14 @@ class RNDNetwork(torch.nn.Module):
         if is_predictor:
             self.d1 = torch.nn.Linear(32*dim2[0]*dim2[1], 128)
             self.d2 = torch.nn.Linear(128, 128)
-            self.v = torch.nn.Linear(128, 1)
+            self.v = torch.nn.Linear(128, rnd_feature_size)
         else:
-            self.v = torch.nn.Linear(32*dim2[0]*dim2[1], 1)
+            self.v = torch.nn.Linear(32*dim2[0]*dim2[1], rnd_feature_size)
 
     def forward(self, x):
         x = x.permute(0, 3, 1, 2)
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
+        x = F.leaky_relu(self.conv1(x))
+        x = F.leaky_relu(self.conv2(x))
         x = self.flat(x)
         if self.is_predictor:
             x = F.relu(self.d1(x))
@@ -171,7 +172,7 @@ class RNDPPOAgent:
         with torch.no_grad():
             target = self.random_network(next_state)
             pred = self.predictor_network(next_state)
-            reward_i = torch.mean(torch.square(pred - target), dim = 1, keepdim=True)
+            reward_i = torch.sum(torch.square(pred - target), dim = 1, keepdim=True)
             
             pi_old, value = self.network(state)
             prob_old = pi_old.gather(1, action.long())
@@ -188,17 +189,17 @@ class RNDPPOAgent:
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
                 adv_i[:, t] += rnd_discount_factor * _lambda * adv_i[:, t+1]
+           
+            # # adv standardization
+            adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
+            adv_i = (adv_i - adv.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
+                
             adv, adv_i  = map(lambda x: x.transpose(0,1).contiguous().view(-1, 1), [adv, adv_i])
             
             ret = adv + value
             ret_i = adv_i + value_i
             
             adv = adv + rnd_strength * adv_i
-            
-            # # adv standardization
-            # adv = adv.view(n_step, -1).transpose(0,1).contiguous()
-            # adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
-            # adv = adv.transpose(0,1).contiguous().view(-1, 1)
             
         # 학습 이터레이션 시작
         actor_losses, critic_losses, rnd_losses = [], [], []
@@ -238,7 +239,7 @@ class RNDPPOAgent:
                 # RND 신경망 손실함수 계산
                 target = self.random_network(_next_state)
                 pred = self.predictor_network(_next_state)
-                rnd_loss = torch.mean(torch.square(pred - target))
+                rnd_loss = torch.sum(torch.square(pred - target), dim = 1).mean()
                 
                 self.rnd_optimizer.zero_grad()
                 rnd_loss.backward()
@@ -278,7 +279,7 @@ if __name__ == '__main__':
     # 유니티 behavior 설정 
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
-    engine_configuration_channel.set_configuration_parameters(time_scale=15.0)
+    engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
@@ -296,10 +297,7 @@ if __name__ == '__main__':
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
 
-        action_branches = np.array(
-          [[0,0,0], [0,0,1], [0,0,2], [0,1,0],
-           [0,1,1], [0,1,2], [1,0,0], [1,0,1],
-           [1,0,2], [1,1,0], [1,1,1], [1,1,2]])
+        action_branches = np.array([[0,0,1], [0,0,2], [0,1,0], [1,0,0]])
         branch_action = action_branches[action.squeeze()]
        
         action_tuple = ActionTuple()
