@@ -19,7 +19,7 @@ train_mode = True
 
 discount_factor = 0.999
 learning_rate = 3e-4
-n_step = 4096
+n_step = 512
 batch_size = 512
 n_epoch = 3
 _lambda = 0.95
@@ -65,29 +65,26 @@ class PPONetwork(torch.nn.Module):
         self.flat = torch.nn.Flatten()
         self.d1 = torch.nn.Linear(32*dim2[0]*dim2[1], 512)
         self.d2 = torch.nn.Linear(512, 512)
-        self.d3 = torch.nn.Linear(512, 512)
         self.pi = torch.nn.Linear(512, action_size)
         self.v = torch.nn.Linear(512, 1)
         self.v_i = torch.nn.Linear(512, 1)
         
     def forward(self, x):
         x = x.permute(0, 3, 1, 2)
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
+        x = F.leaky_relu(self.conv1(x))
+        x = F.leaky_relu(self.conv2(x))
         x = self.flat(x)
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
-        x = F.relu(self.d3(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
     
     def get_vi(self, x):
         x = x.permute(0, 3, 1, 2)
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
+        x = F.leaky_relu(self.conv1(x))
+        x = F.leaky_relu(self.conv2(x))
         x = self.flat(x)
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
-        x = F.relu(self.d3(x))
         return self.v_i(x)
     
 # RNDNetwork 클래스 
@@ -108,7 +105,7 @@ class RNDNetwork(torch.nn.Module):
             self.v = torch.nn.Linear(128, rnd_feature_size)
         else:
             self.v = torch.nn.Linear(32*dim2[0]*dim2[1], rnd_feature_size)
-
+            
     def forward(self, x):
         x = x.permute(0, 3, 1, 2)
         x = F.leaky_relu(self.conv1(x))
@@ -118,7 +115,46 @@ class RNDNetwork(torch.nn.Module):
             x = F.relu(self.d1(x))
             x = F.relu(self.d2(x))
         return self.v(x)
+    
+# codes modified from https://github.com/openai/random-network-distillation
+class RunningMeanStd(torch.nn.Module):
+    def __init__(self, shape, epsilon=1e-4):
+        super(RunningMeanStd, self).__init__()
+        self.mean = torch.nn.Parameter(torch.zeros(shape), requires_grad=False)
+        self.var = torch.nn.Parameter(torch.zeros(shape), requires_grad=False)
+        self.count = torch.nn.Parameter(torch.tensor(epsilon), requires_grad=False)
 
+    def update(self, x):
+        batch_mean, batch_std, batch_count = x.mean(axis=0), x.std(axis=0), x.shape[0]
+        batch_var = torch.square(batch_std)
+        self.update_from_moments(batch_mean, batch_var, batch_count)
+
+    def update_from_moments(self, batch_mean, batch_var, batch_count):
+        delta = batch_mean - self.mean
+        tot_count = self.count + batch_count
+
+        new_mean = self.mean + delta * batch_count / tot_count
+        m_a = self.var * self.count
+        m_b = batch_var * (batch_count)
+        M2 = (
+            m_a
+            + m_b
+            + torch.square(delta)
+            * self.count
+            * batch_count
+            / (self.count + batch_count)
+        )
+        new_var = M2 / (self.count + batch_count)
+
+        new_count = batch_count + self.count
+
+        self.mean.data = new_mean
+        self.var.data = new_var
+        self.count.data = new_count
+    
+    def normalize(self, x):
+        return torch.clip((x - self.mean) / (torch.sqrt(self.var) + 1e-7), min=-5.0, max=5.0)
+        
 # RNDPPOAgent 클래스 -> RND PPO 알고리즘을 위한 다양한 함수 정의 
 class RNDPPOAgent:
     def __init__(self):
@@ -126,6 +162,11 @@ class RNDPPOAgent:
         self.random_network = RNDNetwork(is_predictor=False).to(device)
         self.predictor_network = RNDNetwork(is_predictor=True).to(device)
         self.rnd_optimizer = torch.optim.Adam(self.predictor_network.parameters(), lr=rnd_learning_rate)
+        
+        # 관측, 내적 보상 RunningMeanStd 선언
+        raw_state_size = state_size[1:] + state_size[:1]
+        self.obs_rms = RunningMeanStd(raw_state_size).to(device)
+        self.ri_rms = RunningMeanStd(1).to(device)
 
         self.network = PPONetwork().to(device)
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
@@ -142,7 +183,7 @@ class RNDPPOAgent:
     def get_action(self, state, training=True):
         # 네트워크 모드 설정
         self.network.train(training)
-
+        
         # 네트워크 연산에 따라 행동 결정
         pi, _ = self.network(torch.FloatTensor(state).to(device))
         action = torch.multinomial(pi, num_samples=1).cpu().numpy()
@@ -167,12 +208,23 @@ class RNDPPOAgent:
 
         state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
                                                         [state, action, reward, next_state, done])
-                
+        
+        # obs_rms update
+        self.obs_rms.update(state)
+        
         # prob_old, adv, ret 계산
         with torch.no_grad():
-            target = self.random_network(next_state)
-            pred = self.predictor_network(next_state)
+            # obs normalize
+            normalized_next_state = self.obs_rms.normalize(next_state)
+            target = self.random_network(normalized_next_state)
+            pred = self.predictor_network(normalized_next_state)
             reward_i = torch.sum(torch.square(pred - target), dim = 1, keepdim=True)
+            
+            # ri_rms update
+            self.ri_rms.update(reward_i)
+            
+            # ri normalize
+            reward_i /= torch.sqrt(self.ri_rms.var) + 1e-7
             
             pi_old, value = self.network(state)
             prob_old = pi_old.gather(1, action.long())
@@ -190,7 +242,7 @@ class RNDPPOAgent:
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
                 adv_i[:, t] += rnd_discount_factor * _lambda * adv_i[:, t+1]
            
-            # # adv standardization
+            # adv standardization
             adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
             adv_i = (adv_i - adv.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
                 
@@ -198,7 +250,6 @@ class RNDPPOAgent:
             
             ret = adv + value
             ret_i = adv_i + value_i
-            
             adv = adv + rnd_strength * adv_i
             
         # 학습 이터레이션 시작
@@ -237,8 +288,10 @@ class RNDPPOAgent:
                 self.optimizer.step()
                 
                 # RND 신경망 손실함수 계산
-                target = self.random_network(_next_state)
-                pred = self.predictor_network(_next_state)
+                _normalized_next_state = self.obs_rms.normalize(_next_state)
+                with torch.no_grad():
+                    target = self.random_network(_normalized_next_state)
+                pred = self.predictor_network(_normalized_next_state)
                 rnd_loss = torch.sum(torch.square(pred - target), dim = 1).mean()
                 
                 self.rnd_optimizer.zero_grad()
