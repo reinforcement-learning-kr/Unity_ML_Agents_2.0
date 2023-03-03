@@ -1,9 +1,7 @@
 # 라이브러리 불러오기
-from turtle import st
 import numpy as np
 import datetime
 import platform
-from math import floor
 import torch
 import torch.nn.functional as F
 from torch.utils.tensorboard import SummaryWriter
@@ -14,28 +12,28 @@ from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
 state_size = [3*2, 32, 32]
-action_size = 12
+action_size = 8
 
 load_model = False
 train_mode = True
 
-rnd_discount_factor = 0.99
-rnd_learning_rate = 1e-4
-rnd_strength = 1.0
-
 discount_factor = 0.999
 learning_rate = 3e-4
-n_step = 4096
+n_step = 2048
 batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
 
+rnd_learning_rate = 1e-4
+rnd_strength = 0.1
+rnd_discount_factor = 0.99
+
 run_step = 5000000 if train_mode else 0
 test_step = 10000
 
-print_interval = 10
-save_interval = 100
+print_interval = 5
+save_interval = 50
 
 # 유니티 환경 경로 
 game = "Maze"
@@ -47,8 +45,8 @@ elif os_name == 'Darwin':
 
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-save_path = f"./saved_models/{game}/PPO/{date_time}"
-load_path = f"./saved_models/{game}/PPO/20220502131128"
+save_path = f"./saved_models/{game}/RNDPPO/{date_time}"
+load_path = f"./saved_models/{game}/RNDPPO/20220502131128"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -57,67 +55,83 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class PPONetwork(torch.nn.Module):
     def __init__(self, **kwargs):
         super(PPONetwork, self).__init__(**kwargs)
-
         self.conv1 = torch.nn.Conv2d(in_channels=state_size[0], out_channels=16,
                                      kernel_size=8, stride=4)
-        dim1 = (floor((state_size[1] - 8)/4 + 1),floor((state_size[2] - 8)/4 + 1))
+        dim1 = ((state_size[1] - 8)//4 + 1, (state_size[2] - 8)//4 + 1)
         self.conv2 = torch.nn.Conv2d(in_channels=16, out_channels=32,
                                      kernel_size=4, stride=2)
-        dim2 = (floor((dim1[0] - 4)/2 + 1), floor((dim1[1] - 4)/2 + 1))
+        dim2 = ((dim1[0] - 4)//2 + 1, (dim1[1] - 4)//2 + 1)
         self.flat = torch.nn.Flatten()
-        self.i = torch.nn.Linear(32*dim2[0]*dim2[1], 512)
-        self.d1 = torch.nn.Linear(512, 512)
+        self.d1 = torch.nn.Linear(32*dim2[0]*dim2[1], 512)
         self.d2 = torch.nn.Linear(512, 512)
         self.d3 = torch.nn.Linear(512, 512)
+        self.d4 = torch.nn.Linear(512, 512)
         self.pi = torch.nn.Linear(512, action_size)
         self.v = torch.nn.Linear(512, 1)
+        self.v_i = torch.nn.Linear(512, 1)
         
     def forward(self, x):
         x = x.permute(0, 3, 1, 2)
-        x = F.leaky_relu(self.conv1(x))
-        x = F.leaky_relu(self.conv2(x))
-        x = F.leaky_relu(self.flat(x))
-        x = F.leaky_relu(self.i(x))
-        x = torch.sigmoid(self.d1(x))
-        x = torch.sigmoid(self.d2(x))
-        x = torch.sigmoid(self.d3(x))
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = self.flat(x)
+        x = F.relu(self.d1(x))
+        x = F.relu(self.d2(x))
+        x = F.relu(self.d3(x))
+        x = F.relu(self.d4(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
+    
+    def get_vi(self, x):
+        x = x.permute(0, 3, 1, 2)
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = self.flat(x)
+        x = F.relu(self.d1(x))
+        x = F.relu(self.d2(x))
+        x = F.relu(self.d3(x))
+        x = F.relu(self.d4(x))
+        return self.v_i(x)
     
 # RNDNetwork 클래스 
 class RNDNetwork(torch.nn.Module):
-    def __init__(self, **kwargs):
+    def __init__(self, is_predictor, **kwargs):
         super(RNDNetwork, self).__init__(**kwargs)
+        self.is_predictor = is_predictor
         self.conv1 = torch.nn.Conv2d(in_channels=state_size[0], out_channels=16,
                                      kernel_size=8, stride=4)
-        dim1 = (floor((state_size[1] - 8)/4 + 1),floor((state_size[2] - 8)/4 + 1))
+        dim1 = ((state_size[1] - 8)//4 + 1, (state_size[2] - 8)//4 + 1)
         self.conv2 = torch.nn.Conv2d(in_channels=16, out_channels=32,
                                      kernel_size=4, stride=2)
-        dim2 = (floor((dim1[0] - 4)/2 + 1), floor((dim1[1] - 4)/2 + 1))
+        dim2 = ((dim1[0] - 4)//2 + 1, (dim1[1] - 4)//2 + 1)
         self.flat = torch.nn.Flatten()
-        self.i = torch.nn.Linear(32*dim2[0]*dim2[1], 128)
-        self.d1 = torch.nn.Linear(128, 128)
-        self.d2 = torch.nn.Linear(128, 128)
-        self.d3 = torch.nn.Linear(128, 128)
-        self.v = torch.nn.Linear(128, 1)
+        if is_predictor:
+            self.d1 = torch.nn.Linear(32*dim2[0]*dim2[1], 128)
+            self.d2 = torch.nn.Linear(128, 128)
+            self.d3 = torch.nn.Linear(128, 128)
+            self.d4 = torch.nn.Linear(128, 128)
+            self.v = torch.nn.Linear(128, 4)
+        else:
+            self.v = torch.nn.Linear(32*dim2[0]*dim2[1], 4)
 
     def forward(self, x):
         x = x.permute(0, 3, 1, 2)
-        x = F.leaky_relu(self.conv1(x))
-        x = F.leaky_relu(self.conv2(x))
-        x = F.leaky_relu(self.flat(x))
-        x = F.leaky_relu(self.i(x))
-        x = torch.sigmoid(self.d1(x))
-        x = torch.sigmoid(self.d2(x))
-        x = torch.sigmoid(self.d3(x))
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = self.flat(x)
+        if self.is_predictor:
+            x = F.relu(self.d1(x))
+            x = F.relu(self.d2(x))
+            x = F.relu(self.d3(x))
+            x = F.relu(self.d4(x))
         return self.v(x)
 
-# PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의 
-class PPOAgent:
+# RNDPPOAgent 클래스 -> RND PPO 알고리즘을 위한 다양한 함수 정의 
+class RNDPPOAgent:
     def __init__(self):
         # RND 모듈에 사용되는 예측, 랜덤 네트워크 선언 
-        self.random_network = RNDNetwork().to(device)
-        self.preditor_network = RNDNetwork().to(device)
-        self.rnd_optimizer = torch.optim.Adam(self.preditor_network.parameters(), lr=rnd_learning_rate)
+        self.random_network = RNDNetwork(is_predictor=True).to(device)
+        self.predictor_network = RNDNetwork(is_predictor=True).to(device)
+        self.rnd_optimizer = torch.optim.Adam(self.predictor_network.parameters(), lr=rnd_learning_rate)
 
         self.network = PPONetwork().to(device)
         self.optimizer = torch.optim.Adam(self.network.parameters(), lr=learning_rate)
@@ -147,7 +161,8 @@ class PPOAgent:
     # 학습 수행
     def train_model(self):
         self.network.train()
-        self.preditor_network.train()
+        self.predictor_network.train()
+        self.random_network.train(False)
 
         state      = np.stack([m[0] for m in self.memory], axis=0)
         action     = np.stack([m[1] for m in self.memory], axis=0)
@@ -159,36 +174,40 @@ class PPOAgent:
         state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
                                                         [state, action, reward, next_state, done])
                 
-        # RND에 대한 내적 보상 계산
+        # prob_old, adv, ret 계산
         with torch.no_grad():
             target = self.random_network(next_state)
-            prediction = self.preditor_network(next_state)
-        rnd_reward = torch.sum((prediction - target) ** 2, dim = 1)
-        rnd_reward = rnd_reward.unsqueeze(dim = 1)
-
-        # prob_old, adv, ret 계산 
-        with torch.no_grad():
+            pred = self.predictor_network(next_state)
+            reward_i = torch.sum((pred - target)**2, dim = 1, keepdim=True)
+            
             pi_old, value = self.network(state)
             prob_old = pi_old.gather(1, action.long())
-
+            value_i = self.network.get_vi(state)
+            
+            reward = reward + rnd_strength * reward_i
             _, next_value = self.network(next_state)
             delta = reward + (1 - done) * discount_factor * next_value - value
-            delta_i = rnd_reward + rnd_discount_factor * next_value - value
-
+            
+            next_value_i = self.network.get_vi(next_state)
+            delta_i = reward_i + rnd_discount_factor * next_value_i - value_i
+            
             adv, adv_i = delta.clone(), delta_i.clone()
             adv, adv_i, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, adv_i, done])
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
                 adv_i[:, t] += rnd_discount_factor * _lambda * adv_i[:, t+1]
-            adv = adv.transpose(0,1).contiguous().view(-1, 1)
-            adv_i = adv_i.transpose(0,1).contiguous().view(-1, 1)
-           
-            ret = adv + value
-            ret_i = adv_i + value
+            adv, adv_i  = map(lambda x: x.transpose(0,1).contiguous().view(-1, 1), [adv, adv_i])
             
-            #print(rnd_strength * adv_i)
+            ret = adv + value
+            ret_i = adv_i + value_i
+            
             adv = adv + rnd_strength * adv_i
-
+            
+            # # adv standardization
+            # adv = adv.view(n_step, -1).transpose(0,1).contiguous()
+            # adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
+            # adv = adv.transpose(0,1).contiguous().view(-1, 1)
+            
         # 학습 이터레이션 시작
         actor_losses, critic_losses, rnd_losses = [], [], []
         idxs = np.arange(len(reward))
@@ -210,28 +229,33 @@ class PPOAgent:
                 actor_loss = -torch.min(surr1, surr2).mean()
 
                 # 가치신경망 손실함수 계산
-                critic_loss = F.mse_loss(value, _ret).mean()
-                critic_i_loss = F.mse_loss(value, _ret_i).mean()
+                critic_loss_e = F.mse_loss(value, _ret).mean()
+                
+                # 내적 가치 신경망 손실함수 계산
+                value_i = self.network.get_vi(_state)
+                critic_loss_i = F.mse_loss(value_i, _ret_i).mean()
+                
+                critic_loss = critic_loss_e + critic_loss_i
 
-                total_loss = actor_loss + critic_loss + critic_i_loss
+                total_loss = actor_loss + critic_loss
 
                 self.optimizer.zero_grad()
                 total_loss.backward()
                 self.optimizer.step()
-
-                with torch.no_grad():
-                    target = self.random_network(_next_state)
-                prediction = self.preditor_network(_next_state)
-                rnd_loss = torch.mean(torch.sum((prediction - target) ** 2, dim = 1))
-
+                
+                # RND 신경망 손실함수 계산
+                target = self.random_network(_next_state)
+                pred = self.predictor_network(_next_state)
+                rnd_loss = torch.mean(torch.sum((pred - target) ** 2, dim = 1))
+                
                 self.rnd_optimizer.zero_grad()
                 rnd_loss.backward()
                 self.rnd_optimizer.step()
 
-                rnd_losses.append(rnd_loss.item())
                 actor_losses.append(actor_loss.item())
                 critic_losses.append(critic_loss.item())
-        
+                rnd_losses.append(rnd_loss.item())
+                
         return np.mean(actor_losses), np.mean(critic_losses), np.mean(rnd_losses)
 
     # 네트워크 모델 저장
@@ -249,7 +273,7 @@ class PPOAgent:
         self.writer.add_scalar("model/critic_loss", critic_loss, step)
         self.writer.add_scalar("model/rnd_loss", rnd_loss, step)
 
-# Main 함수 -> 전체적으로 PPO 알고리즘을 진행 
+# Main 함수 -> 전체적으로 RND PPO 알고리즘을 진행 
 if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
@@ -267,7 +291,7 @@ if __name__ == '__main__':
     num_worker = len(dec)
 
     # PPO 클래스를 agent로 정의 
-    agent = PPOAgent()
+    agent = RNDPPOAgent()
     actor_losses, critic_losses, rnd_losses, scores, episode, score = [], [], [], [], 0, 0
     for step in range(run_step + test_step):
         if step == run_step:
@@ -277,27 +301,15 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        
-        #action_branches = np.array([
-        #    [0,0,0], [0,0,1], [0,0,2], [0,1,0],
-        #    [0,1,1], [0,1,2], [1,0,0], [1,0,1],
-        #    [1,0,2], [1,1,0], [1,1,1], [1,1,2] 
-        #])
-        action_branches = [
-            [0,0,0], [0,0,1], [0,0,2], [0,1,0],
-            [0,1,1], [0,1,2], [1,0,0], [1,0,1],
-            [1,0,2], [1,1,0], [1,1,1], [1,1,2] 
-        ]
-        
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
-        #branch_action = action_branches[action.squeeze()]
 
-        branch_action = []
-        for tmp in action:
-            branch_action.append(action_branches[tmp[0]])
-        branch_action = np.array(branch_action, dtype=int)
-
+        action_branches = np.array(
+          [[0,0,1], [0,0,2], [0,1,0],
+           [0,1,1], [0,1,2], [1,0,1],
+           [1,0,2], [1,1,0]])
+        branch_action = action_branches[action.squeeze()]
+       
         action_tuple = ActionTuple()
         action_tuple.add_discrete(branch_action)
         env.set_actions(behavior_name, action_tuple)
