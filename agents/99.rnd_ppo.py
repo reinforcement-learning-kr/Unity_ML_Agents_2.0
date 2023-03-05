@@ -12,21 +12,21 @@ from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
 state_size = [3*2, 32, 32]
-action_size = 4
+action_size = 8
 
 load_model = False
 train_mode = True
 
-discount_factor = 0.999
+discount_factor = 0.9999
 learning_rate = 3e-4
-n_step = 512
+n_step = 4096
 batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
 
 rnd_learning_rate = 1e-4
-rnd_strength = 0.5
+rnd_strength = 0.1
 rnd_discount_factor = 0.99
 rnd_feature_size = 128
 
@@ -350,7 +350,10 @@ if __name__ == '__main__':
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
 
-        action_branches = np.array([[0,0,1], [0,0,2], [0,1,0], [1,0,0]])
+        action_branches = np.array(
+          [[0,0,1], [0,0,2], [0,1,0],
+           [0,1,1], [0,1,2], [1,0,1],
+           [1,0,2], [1,1,0]])
         branch_action = action_branches[action.squeeze()]
        
         action_tuple = ActionTuple()
