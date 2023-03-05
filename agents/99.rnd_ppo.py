@@ -12,7 +12,7 @@ from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
 state_size = [3*2, 32, 32]
-action_size = 8
+action_size = 6
 
 load_model = False
 train_mode = True
@@ -30,8 +30,8 @@ rnd_strength = 0.1
 rnd_discount_factor = 0.99
 rnd_feature_size = 128
 
-run_step = 5000000 if train_mode else 0
-test_step = 10000
+run_step = 1000000 if train_mode else 0
+test_step = 50000
 
 print_interval = 5
 save_interval = 50
@@ -236,21 +236,21 @@ class RNDPPOAgent:
             next_value_i = self.network.get_vi(next_state)
             delta_i = reward_i + rnd_discount_factor * next_value_i - value_i
             
-            adv, adv_i = delta.clone(), delta_i.clone()
-            adv, adv_i, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, adv_i, done])
+            adv_e, adv_i = delta.clone(), delta_i.clone()
+            adv_e, adv_i, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv_e, adv_i, done])
             for t in reversed(range(n_step-1)):
-                adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
+                adv_e[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv_e[:, t+1]
                 adv_i[:, t] += rnd_discount_factor * _lambda * adv_i[:, t+1]
            
+            adv = adv_e + rnd_strength * adv_i
+            
             # adv standardization
             adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
-            adv_i = (adv_i - adv.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
-                
-            adv, adv_i  = map(lambda x: x.transpose(0,1).contiguous().view(-1, 1), [adv, adv_i])
             
-            ret = adv + value
+            adv_e, adv_i, adv  = map(lambda x: x.transpose(0,1).contiguous().view(-1, 1), [adv_e, adv_i, adv])
+            
+            ret = adv_e + value
             ret_i = adv_i + value_i
-            adv = adv + rnd_strength * adv_i
             
         # 학습 이터레이션 시작
         actor_losses, critic_losses, rnd_losses = [], [], []
@@ -350,10 +350,7 @@ if __name__ == '__main__':
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
 
-        action_branches = np.array(
-          [[0,0,1], [0,0,2], [0,1,0],
-           [0,1,1], [0,1,2], [1,0,1],
-           [1,0,2], [1,1,0]])
+        action_branches = np.array([[0,0,1], [0,0,2], [0,1,1], [0,1,2], [0,1,0], [1,0,0]])
         branch_action = action_branches[action.squeeze()]
        
         action_tuple = ActionTuple()
@@ -371,7 +368,7 @@ if __name__ == '__main__':
             done[id] = True
             next_state[id] = term.obs[0][_id]
             reward[id] = term.reward[_id]
-        score += sum(reward)/len(reward)
+        score += reward[0]
 
         if train_mode:
             for id in range(num_worker):
