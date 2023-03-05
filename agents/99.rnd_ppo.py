@@ -243,10 +243,10 @@ class RNDPPOAgent:
                 adv_i[:, t] += rnd_discount_factor * _lambda * adv_i[:, t+1]
            
             adv = adv_e + rnd_strength * adv_i
-            
+           
             # adv standardization
             adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
-            
+                
             adv_e, adv_i, adv  = map(lambda x: x.transpose(0,1).contiguous().view(-1, 1), [adv_e, adv_i, adv])
             
             ret = adv_e + value
