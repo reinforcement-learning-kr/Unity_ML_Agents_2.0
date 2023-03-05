@@ -244,7 +244,7 @@ class RNDPPOAgent:
            
             # adv standardization
             adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
-            adv_i = (adv_i - adv.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
+            adv_i = (adv_i - adv_i.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
                 
             adv, adv_i  = map(lambda x: x.transpose(0,1).contiguous().view(-1, 1), [adv, adv_i])
             
