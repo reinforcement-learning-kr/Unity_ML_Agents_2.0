@@ -12,7 +12,7 @@ from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
 state_size = [3*2, 32, 32]
-action_size = 6
+action_size = 8
 
 load_model = False
 train_mode = True
@@ -241,7 +241,10 @@ class RNDPPOAgent:
             for t in reversed(range(n_step-1)):
                 adv_e[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv_e[:, t+1]
                 adv_i[:, t] += rnd_discount_factor * _lambda * adv_i[:, t+1]
-           
+            
+            # adv_e, adv_i standardization
+            adv_e = (adv_e - adv_e.mean(dim=1, keepdim=True)) / (adv_e.std(dim=1, keepdim=True) + 1e-7)
+            adv_i = (adv_i - adv_i.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
             adv = adv_e + rnd_strength * adv_i
            
             # adv standardization
@@ -350,7 +353,10 @@ if __name__ == '__main__':
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
 
-        action_branches = np.array([[0,0,1], [0,0,2], [0,1,1], [0,1,2], [0,1,0], [1,0,0]])
+        action_branches = np.array(
+          [[0,0,1], [0,0,2], [0,1,0],
+           [0,1,1], [0,1,2], [1,0,1],
+           [1,0,2], [1,1,0]])
         branch_action = action_branches[action.squeeze()]
        
         action_tuple = ActionTuple()
