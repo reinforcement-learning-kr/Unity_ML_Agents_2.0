@@ -164,7 +164,7 @@ class RNDPPOAgent:
         self.rnd_optimizer = torch.optim.Adam(self.predictor_network.parameters(), lr=rnd_learning_rate)
         
         # 관측, 내적 보상 RunningMeanStd 선언
-        raw_state_size = state_size[1:] + state_size[:1]
+        raw_state_size = state_size[1:] + state_size[:1] # CWH -> WHC
         self.obs_rms = RunningMeanStd(raw_state_size).to(device)
         self.ri_rms = RunningMeanStd(1).to(device)
 
@@ -236,24 +236,24 @@ class RNDPPOAgent:
             next_value_i = self.network.get_vi(next_state)
             delta_i = reward_i + rnd_discount_factor * next_value_i - value_i
             
-            adv_e, adv_i = delta.clone(), delta_i.clone()
-            adv_e, adv_i, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv_e, adv_i, done])
+            adv, adv_i = delta.clone(), delta_i.clone()
+            adv, adv_i, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, adv_i, done])
             for t in reversed(range(n_step-1)):
-                adv_e[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv_e[:, t+1]
+                adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
+                # non episodic for internal advantage
                 adv_i[:, t] += rnd_discount_factor * _lambda * adv_i[:, t+1]
-            
-            # adv_e, adv_i standardization
-            adv_e = (adv_e - adv_e.mean(dim=1, keepdim=True)) / (adv_e.std(dim=1, keepdim=True) + 1e-7)
-            adv_i = (adv_i - adv_i.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
-            adv = adv_e + rnd_strength * adv_i
            
             # adv standardization
             adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
-                
-            adv_e, adv_i, adv  = map(lambda x: x.transpose(0,1).contiguous().view(-1, 1), [adv_e, adv_i, adv])
+            adv_i = (adv_i - adv_i.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
             
-            ret = adv_e + value
+            adv, adv_i = map(lambda x: x.transpose(0,1).contiguous().view(-1, 1), [adv, adv_i])
+            
+            ret = adv + value
             ret_i = adv_i + value_i
+            
+            # merge internal and external
+            adv = adv + rnd_strength * adv_i
             
         # 학습 이터레이션 시작
         actor_losses, critic_losses, rnd_losses = [], [], []
