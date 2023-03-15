@@ -202,6 +202,7 @@ if __name__ == '__main__':
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
+        
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
         action_tuple = ActionTuple()
