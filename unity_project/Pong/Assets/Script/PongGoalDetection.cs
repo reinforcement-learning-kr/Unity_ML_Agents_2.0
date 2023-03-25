@@ -8,44 +8,46 @@ public class PongGoalDetection : MonoBehaviour
     public PongAgent AgentB;
 
     private Rigidbody RbBall;
-
-    private Vector3 ResetPos;
+    
+    private Vector3 Resetpos;
     private Vector3 velocity;
 
-    private Transform ballTrans = null;
+    private Transform ballTrans;
 
     private float max_ball_speed = 10f;
     private float min_ball_speed = 5f;
 
-
-    private void Start()
+    void Start()
     {
         RbBall = gameObject.GetComponent<Rigidbody>();
         ballTrans = transform;
-        ResetPos = ballTrans.position;
+        Resetpos = transform.position;
     }
 
-    public void ResetPostion()
+    public void ResetPosition()
     {
-        ballTrans.position = ResetPos;
+        ballTrans.position = Resetpos;
         RbBall.velocity = Vector3.zero;
         RbBall.angularVelocity = Vector3.zero;
         ballTrans.rotation = Quaternion.identity;
 
         float rand_num = Random.Range(-1f, 1f);
-    
-        if(rand_num < -0.5f)     // 오른쪽 위로 이동
+
+        if (rand_num < -0.5f)
         {
             velocity = new Vector3(Random.Range(min_ball_speed, max_ball_speed), 0, Random.Range(min_ball_speed, max_ball_speed));
         }
-        else if (rand_num < 0f)     // 오른쪽 아로 이동
+        
+        else if (rand_num < 0f)
         {
             velocity = new Vector3(Random.Range(min_ball_speed, max_ball_speed), 0, Random.Range(-max_ball_speed, -min_ball_speed));
         }
-        else if (rand_num < 0.5f)   // 왼쪽 위로 이동
+
+        else if (rand_num < 0.5f)
         {
             velocity = new Vector3(Random.Range(-max_ball_speed, -min_ball_speed), 0, Random.Range(min_ball_speed, max_ball_speed));
         }
+
         else
         {
             velocity = new Vector3(Random.Range(-max_ball_speed, -min_ball_speed), 0, Random.Range(-max_ball_speed, -min_ball_speed));
@@ -56,18 +58,18 @@ public class PongGoalDetection : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if(collision.gameObject.CompareTag("GoalA"))
+        if (collision.gameObject.CompareTag("GoalA"))
         {
-            AgentB.ScoredGoal();
-            AgentA.OpponentScored();
+            AgentA.ScoredGoal();
+            AgentB.OpponentScored();
             AgentA.AgentReset();
             AgentB.AgentReset();
         }
 
         if (collision.gameObject.CompareTag("GoalB"))
         {
-            AgentA.ScoredGoal();
-            AgentB.OpponentScored();
+            AgentB.ScoredGoal();
+            AgentA.OpponentScored();
             AgentA.AgentReset();
             AgentB.AgentReset();
         }

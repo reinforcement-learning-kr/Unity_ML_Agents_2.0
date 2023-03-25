@@ -4,10 +4,10 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Ball
   - Wall
   - GoalA
   - GoalB
+  - Ball
   layers:
   - Default
   - TransparentFX

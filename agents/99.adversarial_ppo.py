@@ -13,8 +13,8 @@ from mlagents_envs.side_channel.engine_configuration_channel\
 state_size = 6
 action_size = 3
 
-load_model = False
-train_mode = True
+load_model = True
+train_mode = False
 
 discount_factor = 0.99
 learning_rate = 3e-4
@@ -24,7 +24,7 @@ n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
 
-run_step = 500000 if train_mode else 0
+run_step = 2000000 if train_mode else 0
 test_step = 50000
 
 print_interval = 10
@@ -41,7 +41,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/APPO/{date_time}"
-load_path = f"./saved_models/{game}/APPO/20221004220009"
+load_path = f"./saved_models/{game}/APPO/20230324222410"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

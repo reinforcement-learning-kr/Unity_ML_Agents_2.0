@@ -1,4 +1,3 @@
-
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,7 +19,7 @@ public class PongAgent : Agent
     private Transform ballTrans = null;
 
     public float timeBetweenDecisionsAtInference;
-    float m_TimeSinceDecision;
+    float m_TimeSinceDecision = 0f;
 
     public delegate void OnEpisodeBeginDel();
     public OnEpisodeBeginDel onEpisodeBeginDel;
@@ -34,22 +33,18 @@ public class PongAgent : Agent
     }
 
     private Vector3 resetPos = Vector3.zero;
-    private Vector3 ballResetPos = Vector3.zero;
-
+    
     public override void Initialize()
     {
-        base.Initialize();
-
         RbAgent = gameObject.GetComponent<Rigidbody>();
         RbBall = Ball.GetComponent<Rigidbody>();
         RbOpponent = Opponent.GetComponent<Rigidbody>();
 
         agentTrans = transform;
-        OpponentTrans = RbOpponent.transform;
+        OpponentTrans = Opponent.transform;
         ballTrans = Ball.transform;
 
         resetPos = agentTrans.position;
-        ballResetPos = ballTrans.position;
 
         Academy.Instance.AgentPreStep += WaitTimeInference;
     }
@@ -66,17 +61,16 @@ public class PongAgent : Agent
         // º»ÀÎ ÁÂÇ¥
         sensor.AddObservation(agentTrans.position.x);
 
-        // »ó´ë¹æ ÁÂÇ¥
+        // »ó´ë¹æÀÇ ÁÂÇ¥
         sensor.AddObservation(OpponentTrans.position.x);
 
-        // BallÀÇ ÁÂÇ¥
+        // ball ÁÂÇ¥
         sensor.AddObservation(ballTrans.position.x);
         sensor.AddObservation(ballTrans.position.z);
 
-        // BallÀÇ ¼Ó·Â
+        // ball ¼Ó·Â
         sensor.AddObservation(RbBall.velocity.x);
         sensor.AddObservation(RbBall.velocity.z);
-
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
@@ -100,7 +94,9 @@ public class PongAgent : Agent
         var hit = Physics.OverlapBox(targetPos, new Vector3(0.5f, 0.5f, 0.5f));
 
         if (hit.Where(col => col.gameObject.CompareTag("Wall")).ToArray().Length == 0)
+        {
             agentTrans.position = targetPos;
+        }
     }
 
     public void OpponentScored()
@@ -117,15 +113,14 @@ public class PongAgent : Agent
 
     private void OnCollisionEnter(Collision collision)
     {
-        if(collision.gameObject.CompareTag("Wall"))
+        if (collision.gameObject.CompareTag("Wall"))
         {
             RbAgent.velocity = Vector3.zero;
             RbAgent.angularVelocity = Vector3.zero;
         }
-
-        if(collision.gameObject.CompareTag("Ball"))
+        if (collision.gameObject.CompareTag("Ball"))
         {
-            AddReward(0.5f);
+            SetReward(0.5f);
         }
     }
 
@@ -134,11 +129,11 @@ public class PongAgent : Agent
         var discreteActionsOut = actionsOut.DiscreteActions;
         if (Input.GetKey(KeyCode.W))
         {
-            discreteActionsOut[0] = 1;
+            discreteActionsOut[0] = 2;
         }
         if (Input.GetKey(KeyCode.S))
         {
-            discreteActionsOut[0] = 2;
+            discreteActionsOut[0] = 1;
         }
     }
 
@@ -170,7 +165,9 @@ public class PongAgent : Agent
     public override void OnEpisodeBegin()
     {
         if (null != onEpisodeBeginDel)
+        {
+            // Debug.Log("OnEpisodeBegin");
             onEpisodeBeginDel();
-        
+        }
     }
 }

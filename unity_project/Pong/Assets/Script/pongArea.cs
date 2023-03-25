@@ -4,20 +4,16 @@ using UnityEngine;
 
 public class pongArea : MonoBehaviour
 {
-    [SerializeField]
-    private PongAgent agentA = null;
-    [SerializeField]
-    private PongGoalDetection goalDetection = null;
+    public PongAgent agentA = null;
+    public PongGoalDetection goalDetection = null;
 
-    public void Start()
+    void Start()
     {
-        if (null != agentA)
-            agentA.SetDelegate(OnEpisodeBegin);
+        agentA.SetDelegate(OnEpisodeBegin);
     }
 
     public void OnEpisodeBegin()
     {
-        if (null != goalDetection)
-            goalDetection.ResetPostion();
+        goalDetection.ResetPosition();
     }
 }
