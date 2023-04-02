@@ -8,16 +8,19 @@ from torch.utils.tensorboard import SummaryWriter
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
-from mlagents_envs.side_channel.environment_parameters_channel\
-                             import EnvironmentParametersChannel
+
 # 파라미터 값 세팅 
 state_size = [3*2, 32, 32]
 action_size = 8
+action_branches = np.array(
+          [[0,0,1], [0,0,2], [0,1,0],
+           [0,1,1], [0,1,2], [1,0,1],
+           [1,0,2], [1,1,0]])
 
 load_model = False
 train_mode = True
 
-discount_factor = 0.9999
+discount_factor = 0.999
 learning_rate = 3e-4
 n_step = 4096
 batch_size = 512
@@ -326,10 +329,8 @@ class RNDPPOAgent:
 if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
-    environment_parameters_channel = EnvironmentParametersChannel()
     env = UnityEnvironment(file_name=env_name,
-                           side_channels=[engine_configuration_channel,
-                                          environment_parameters_channel])
+                           side_channels=[engine_configuration_channel])
     env.reset()
 
     # 유니티 behavior 설정 
@@ -352,11 +353,6 @@ if __name__ == '__main__':
         
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
-
-        action_branches = np.array(
-          [[0,0,1], [0,0,2], [0,1,0],
-           [0,1,1], [0,1,2], [1,0,1],
-           [1,0,2], [1,1,0]])
         branch_action = action_branches[action.squeeze()]
        
         action_tuple = ActionTuple()
