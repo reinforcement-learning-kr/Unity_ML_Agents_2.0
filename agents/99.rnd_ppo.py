@@ -11,11 +11,10 @@ from mlagents_envs.side_channel.engine_configuration_channel\
 
 # 파라미터 값 세팅 
 state_size = [3*2, 32, 32]
-action_size = 8
+action_size = 6
 action_branches = np.array(
           [[0,0,1], [0,0,2], [0,1,0],
-           [0,1,1], [0,1,2], [1,0,1],
-           [1,0,2], [1,1,0]])
+           [0,1,1], [0,1,2], [1,1,0]])
 
 load_model = False
 train_mode = True
@@ -50,7 +49,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/RNDPPO/{date_time}"
-load_path = f"./saved_models/{game}/RNDPPO/20220502131128"
+load_path = f"./saved_models/{game}/RNDPPO/20230402170946"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
