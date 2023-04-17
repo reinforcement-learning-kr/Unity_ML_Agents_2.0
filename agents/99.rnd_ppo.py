@@ -137,7 +137,7 @@ class RunningMeanStd(torch.nn.Module):
 
         new_mean = self.mean + delta * batch_count / tot_count
         m_a = self.var * self.count
-        m_b = batch_var * (batch_count)
+        m_b = batch_var * batch_count
         M2 = (
             m_a
             + m_b
