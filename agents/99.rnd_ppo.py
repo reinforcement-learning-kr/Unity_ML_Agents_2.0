@@ -104,9 +104,9 @@ class RNDNetwork(torch.nn.Module):
         if is_predictor:
             self.d1 = torch.nn.Linear(32*dim2[0]*dim2[1], 128)
             self.d2 = torch.nn.Linear(128, 128)
-            self.v = torch.nn.Linear(128, rnd_feature_size)
+            self.feature = torch.nn.Linear(128, rnd_feature_size)
         else:
-            self.v = torch.nn.Linear(32*dim2[0]*dim2[1], rnd_feature_size)
+            self.feature = torch.nn.Linear(32*dim2[0]*dim2[1], rnd_feature_size)
             
     def forward(self, x):
         x = x.permute(0, 3, 1, 2)
@@ -116,7 +116,7 @@ class RNDNetwork(torch.nn.Module):
         if self.is_predictor:
             x = F.relu(self.d1(x))
             x = F.relu(self.d2(x))
-        return self.v(x)
+        return self.feature(x)
     
 # codes modified from https://github.com/openai/random-network-distillation
 class RunningMeanStd(torch.nn.Module):
