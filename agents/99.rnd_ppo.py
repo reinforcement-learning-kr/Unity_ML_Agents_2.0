@@ -245,7 +245,7 @@ class RNDPPOAgent:
                 # non episodic for internal advantage
                 adv_i[:, t] += rnd_discount_factor * _lambda * adv_i[:, t+1]
            
-            # adv standardization
+            # adv normalization
             adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
             adv_i = (adv_i - adv_i.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
             
