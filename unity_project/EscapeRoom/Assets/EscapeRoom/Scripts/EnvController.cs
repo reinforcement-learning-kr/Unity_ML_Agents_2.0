@@ -1,8 +1,7 @@
-using System.Collections.Generic;
-using UnityEngine;
 using System;
+using UnityEngine;
 using Unity.MLAgents;
-using System.Linq;
+using System.Collections.Generic;
 
 public class EnvController : MonoBehaviour
 {
