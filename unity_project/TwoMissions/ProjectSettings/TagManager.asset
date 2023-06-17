@@ -4,12 +4,10 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - agent
   - wall
-  - pushblockgoal
-  - ball
   - wallPassGoal
   - pushBallGoal
+  - ball
   layers:
   - Default
   - TransparentFX

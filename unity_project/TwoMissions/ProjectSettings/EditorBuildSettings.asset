@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/TwoMissions/Scenes/TwoMissions.unity
-    guid: e6049f96e9a704e0ebd72cd128e50b16
+    path: Assets/TwoMission/TwoMission.unity
+    guid: 9c3eed755b5e3e54c872f140f6ca171f
   m_configObjects: {}
