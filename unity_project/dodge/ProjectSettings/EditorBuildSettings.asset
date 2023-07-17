@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Dodge/Scene/Dodge.unity
-    guid: 7c82104f46bcedd4f9f9415a9836f99e
+    path: Assets/Scenes/Dodge.unity
+    guid: 74b6636ab1bee3d449e5e74529c02575
   m_configObjects: {}
