@@ -1,4 +1,7 @@
 mlagents==0.27.0
 mlagents-envs==0.27.0
 tensorboard==2.7.0
-torch==1.8.0+cu111
+protobuf==3.20
+numpy==1.19
+torch==2.0.0+cu117
+--extra-index https://download.pytorch.org/whl/cu117
