@@ -25,20 +25,19 @@ train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
-n_step = 5120
-batch_size = 512
+n_step = 128
+batch_size = 128
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.3
 
-run_step = 500000 if train_mode else 0
+run_step = 2000000 if train_mode else 0
 test_step = 100000
 
 print_interval = 10
 save_interval = 100
 
-env_config = {"ballSpeed": 2, "ballNums": 15, "ballRandom": 0.2,
-              "randomSeed": 77, "agentSpeed": 15}
+env_config = {"ballSpeed": 4, "ballNums": 10, "ballRandom": 0.2, "agentSpeed": 1, "boardRadius": 8}
 
 # 유니티 환경 경로 
 game = "Dodge_Attention"
