@@ -25,8 +25,8 @@ train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
-n_step = 128
-batch_size = 128
+n_step = 512
+batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.3
@@ -37,7 +37,7 @@ test_step = 100000
 print_interval = 10
 save_interval = 100
 
-env_config = {"ballSpeed": 4, "ballNums": 10, "ballRandom": 0.2, "agentSpeed": 1, "boardRadius": 8}
+env_config = {"ballSpeed": 4, "ballNums": 10, "ballRandom": 0.2, "agentSpeed": 3, "boardRadius": 8}
 
 # 유니티 환경 경로 
 game = "Dodge_Attention"
@@ -50,7 +50,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/AttentionPPO/{date_time}"
-load_path = f"./saved_models/{game}/AttentionPPO/20220908190757"
+load_path = f"./saved_models/{game}/AttentionPPO/20230730134703"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -201,6 +201,9 @@ if __name__ == '__main__':
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
+    for key, value in env_config.items():
+        environment_parameters_channel.set_float_parameter(key, value)
+    
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 

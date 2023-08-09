@@ -36,12 +36,12 @@ curriculum_level = 0
 
 curriculum_parameters = \
     [
-        {"boardRadius": 8.0, "ballSpeed": 2.5, "ballNums": 6},
-        {"boardRadius": 7.5, "ballSpeed": 3.0, "ballNums": 8},
-        {"boardRadius": 7.0, "ballSpeed": 3.5, "ballNums": 10},
+        {"boardRadius": 8.0, "ballSpeed": 2.0, "ballNums": 8},
+        {"boardRadius": 7.5, "ballSpeed": 2.5, "ballNums": 10},
+        {"boardRadius": 7.0, "ballSpeed": 3.0, "ballNums": 12},
     ]
 
-curriculum_threshold = [0.2, 0.5, 1.0]
+curriculum_threshold = [0.2, 0.4, 1.0]
 
 # 유니티 환경 경로
 game = "Dodge"

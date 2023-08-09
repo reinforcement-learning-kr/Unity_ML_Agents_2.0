@@ -32,7 +32,7 @@ print_interval = 10
 save_interval = 100
 
 # 닷지 환경 설정
-env_static_config = {"ballSpeed": 4, "ballRandom": 0.2, "agentSpeed": 1}
+env_static_config = {"ballSpeed": 4, "ballRandom": 0.2, "agentSpeed": 3}
 env_dynamic_config = {"boardRadius": {"min":6, "max": 8, "seed": 77},
                       "ballNums": {"min": 10, "max": 15, "seed": 77}}
 
@@ -47,7 +47,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/PPO/{date_time}"
-load_path = f"./saved_models/{game}/PPO/20220502131128"
+load_path = f"./saved_models/{game}/PPO/20230728125435"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
