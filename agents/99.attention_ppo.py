@@ -37,7 +37,8 @@ test_step = 100000
 print_interval = 10
 save_interval = 100
 
-env_config = {"ballSpeed": 4, "ballNums": 10, "ballRandom": 0.2, "agentSpeed": 3, "boardRadius": 8}
+env_config = {"ballSpeed": 4, "ballNums": 10, "ballRandom": 0.2,
+              "agentSpeed": 3, "boardRadius": 8}
 
 # 유니티 환경 경로 
 game = "Dodge_Attention"
