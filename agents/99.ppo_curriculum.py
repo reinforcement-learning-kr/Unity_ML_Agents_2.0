@@ -54,7 +54,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/PPO/{date_time}"
-load_path = f"./saved_models/{game}/PPO/20220417114819"
+load_path = f"./saved_models/{game}/PPO/20230806204621"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
