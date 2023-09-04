@@ -183,7 +183,7 @@ class AttentionPPOAgent:
         }, save_path+'/ckpt')
 
     # 학습 기록 
-    def write_summray(self, score, actor_loss, critic_loss, step):
+    def write_summary(self, score, actor_loss, critic_loss, step):
         self.writer.add_scalar("run/score", score, step)
         self.writer.add_scalar("model/actor_loss", actor_loss, step)
         self.writer.add_scalar("model/critic_loss", critic_loss, step)
@@ -265,7 +265,7 @@ if __name__ == '__main__':
                 mean_score = np.mean(scores)
                 mean_actor_loss = np.mean(actor_losses) if len(actor_losses) > 0 else 0
                 mean_critic_loss = np.mean(critic_losses)  if len(critic_losses) > 0 else 0
-                agent.write_summray(mean_score, mean_actor_loss, mean_critic_loss, step)
+                agent.write_summary(mean_score, mean_actor_loss, mean_critic_loss, step)
                 actor_losses, critic_losses, scores = [], [], []
 
                 print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +\
