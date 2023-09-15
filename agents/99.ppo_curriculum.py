@@ -10,7 +10,7 @@ from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
-# 파라미터 값 세팅
+# 파라미터 값 세팅 
 state_size = 122
 action_size = 5
 
@@ -43,7 +43,7 @@ curriculum_parameters = \
 
 curriculum_threshold = [0.2, 0.4, 1.0]
 
-# 유니티 환경 경로
+# 유니티 환경 경로 
 game = "Dodge"
 os_name = platform.system()
 if os_name == 'Windows':
@@ -59,7 +59,7 @@ load_path = f"./saved_models/{game}/PPO/20230806204621"
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# ActorCritic 클래스 -> Actor Network, Critic Network 정의
+# ActorCritic 클래스 -> Actor Network, Critic Network 정의 
 class ActorCritic(torch.nn.Module):
     def __init__(self, **kwargs):
         super(ActorCritic, self).__init__(**kwargs)
@@ -67,13 +67,13 @@ class ActorCritic(torch.nn.Module):
         self.d2 = torch.nn.Linear(128, 128)
         self.pi = torch.nn.Linear(128, action_size)
         self.v = torch.nn.Linear(128, 1)
-
+        
     def forward(self, x):
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
 
-# PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의
+# PPOAgent 클래스 -> PPO 알고리즘을 위한 다양한 함수 정의 
 class PPOAgent:
     def __init__(self):
         self.network = ActorCritic().to(device)
@@ -87,7 +87,7 @@ class PPOAgent:
             self.network.load_state_dict(checkpoint["network"])
             self.optimizer.load_state_dict(checkpoint["optimizer"])
 
-    # 정책을 통해 행동 결정
+    # 정책을 통해 행동 결정 
     def get_action(self, state, training=True):
         # 네트워크 모드 설정
         self.network.train(training)
@@ -126,7 +126,7 @@ class PPOAgent:
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
             adv = adv.transpose(0,1).contiguous().view(-1, 1)
-
+            
             ret = adv + value
 
         # 학습 이터레이션 시작
@@ -139,7 +139,7 @@ class PPOAgent:
 
                 _state, _action, _ret, _adv, _prob_old =\
                     map(lambda x: x[idx], [state, action, ret, adv, prob_old])
-
+                
                 pi, value = self.network(_state)
                 prob = pi.gather(1, _action.long())
 
@@ -171,13 +171,13 @@ class PPOAgent:
             "optimizer" : self.optimizer.state_dict(),
         }, save_path+'/ckpt')
 
-        # 학습 기록
+    # 학습 기록 
     def write_summary(self, score, actor_loss, critic_loss, step):
         self.writer.add_scalar("run/score", score, step)
         self.writer.add_scalar("model/actor_loss", actor_loss, step)
         self.writer.add_scalar("model/critic_loss", critic_loss, step)
 
-# Main 함수 -> 전체적으로 PPO 알고리즘을 진행
+# Main 함수 -> 전체적으로 PPO 알고리즘을 진행 
 if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
@@ -187,7 +187,7 @@ if __name__ == '__main__':
                                           environment_parameters_channel])
     env.reset()
 
-    # 유니티 behavior 설정
+    # 유니티 behavior 설정 
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
@@ -195,11 +195,10 @@ if __name__ == '__main__':
     # reset curriculum 
     for key, value in curriculum_parameters[curriculum_level].items():
         environment_parameters_channel.set_float_parameter(key, value)
-            
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
-    # PPO 클래스를 agent로 정의
+    # PPO 클래스를 agent로 정의 
     agent = PPOAgent()
     actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
     for step in range(run_step + test_step):
@@ -209,6 +208,7 @@ if __name__ == '__main__':
             print("TEST START")
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
+        
         state = dec.obs[0]
         action = agent.get_action(state, train_mode)
         action_tuple = ActionTuple()
@@ -242,7 +242,7 @@ if __name__ == '__main__':
             scores.append(score)
             score = 0
 
-          # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록
+            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
             if episode % print_interval == 0:
                 mean_score = np.mean(scores)
                 mean_actor_loss = np.mean(actor_losses) if len(actor_losses) > 0 else 0
@@ -253,7 +253,7 @@ if __name__ == '__main__':
                 print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +\
                       f"Actor loss: {mean_actor_loss:.2f} / Critic loss: {mean_critic_loss:.4f}" )
 
-            # 네트워크 모델 저장
+            # 네트워크 모델 저장 
             if train_mode and episode % save_interval == 0:
                 agent.save_model()
 
