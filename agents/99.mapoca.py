@@ -107,100 +107,96 @@ class MAPOCAAgent:
             self.critic_optimizer.load_state_dict(checkpoint["critic_optimizer"])
 
     # 정책을 통해 행동 결정 
-    def get_action(self, state, training=True):
-        # actions = []
-        # for actor, state in zip(self.actors, states):
-        #     # 네트워크 모드 설정
-        #     actor.train(training)
+    def get_action(self, states, active_agents, training=True):
+        actions = []
+        for i, (state, active_agent) in enumerate(zip(states, active_agents)):
+            # 네트워크 모드 설정
+            self.actors[active_agent].train(training)
 
-        #     # 네트워크 연산에 따라 행동 결정
-        #     pi, _ = actor(torch.FloatTensor(state).to(device))
-        #     action = torch.multinomial(pi, num_samples=1).cpu().numpy()
-        #     actions.append(action)
-        # return actions
-        actor = self.actors[0]
-        actor.train(training)
-
-        # 네트워크 연산에 따라 행동 결정
-        pi = actor(torch.FloatTensor(state).to(device))
-        action = torch.multinomial(pi, num_samples=1).cpu().numpy()
-        return action
+            # 네트워크 연산에 따라 행동 결정
+            pi = self.actors[active_agent](torch.FloatTensor(state).to(device))
+            action = torch.multinomial(pi, num_samples=1).cpu().numpy()
+            actions.append(action)
+        return np.array(actions).reshape((len(active_agents), 1))
 
     # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
     def append_sample(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
     # 학습 수행
-    def train_model(self):
-        for i in range(num_agents):
-            self.actors[i].train()
-        self.critic.train()
+    # def train_model(self):
+    #     for i in range(num_agents):
+    #         self.actors[i].train()
+    #     self.critic.train()
 
-        state      = np.stack([m[0] for m in self.memory], axis=0)
-        action     = np.stack([m[1] for m in self.memory], axis=0)
-        reward     = np.stack([m[2] for m in self.memory], axis=0)
-        next_state = np.stack([m[3] for m in self.memory], axis=0)
-        done       = np.stack([m[4] for m in self.memory], axis=0)
-        self.memory.clear()
+    #     state      = np.stack([m[0] for m in self.memory], axis=0)
+    #     action     = np.stack([m[1] for m in self.memory], axis=0)
+    #     reward     = np.stack([m[2] for m in self.memory], axis=0)
+    #     next_state = np.stack([m[3] for m in self.memory], axis=0)
+    #     done       = np.stack([m[4] for m in self.memory], axis=0)
+    #     self.memory.clear()
 
-        state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
-                                                        [state, action, reward, next_state, done])
-        # prob_old, adv, ret 계산 
-        with torch.no_grad():
-            pi_old, value = self.network(state)
-            prob_old = pi_old.gather(1, action.long())
+    #     state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
+    #                                                     [state, action, reward, next_state, done])
+    #     # prob_old, adv, ret 계산 
+    #     with torch.no_grad():
+    #         pi_old, value = self.network(state)
+    #         prob_old = pi_old.gather(1, action.long())
 
-            _, next_value = self.network(next_state)
-            delta = reward + (1 - done) * discount_factor * next_value - value
-            adv = delta.clone()
-            adv, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, done])
-            for t in reversed(range(n_step-1)):
-                adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
-            adv = adv.transpose(0,1).contiguous().view(-1, 1)
+    #         _, next_value = self.network(next_state)
+    #         delta = reward + (1 - done) * discount_factor * next_value - value
+    #         adv = delta.clone()
+    #         adv, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, done])
+    #         for t in reversed(range(n_step-1)):
+    #             adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
+    #         adv = adv.transpose(0,1).contiguous().view(-1, 1)
             
-            ret = adv + value
+    #         ret = adv + value
 
-        # 학습 이터레이션 시작
-        actor_losses, critic_losses = [], []
-        idxs = np.arange(len(reward))
-        for _ in range(n_epoch):
-            np.random.shuffle(idxs)
-            for offset in range(0, len(reward), batch_size):
-                idx = idxs[offset : offset + batch_size]
+    #     # 학습 이터레이션 시작
+    #     actor_losses, critic_losses = [], []
+    #     idxs = np.arange(len(reward))
+    #     for _ in range(n_epoch):
+    #         np.random.shuffle(idxs)
+    #         for offset in range(0, len(reward), batch_size):
+    #             idx = idxs[offset : offset + batch_size]
 
-                _state, _action, _ret, _adv, _prob_old =\
-                    map(lambda x: x[idx], [state, action, ret, adv, prob_old])
+    #             _state, _action, _ret, _adv, _prob_old =\
+    #                 map(lambda x: x[idx], [state, action, ret, adv, prob_old])
                 
-                pi, value = self.network(_state)
-                prob = pi.gather(1, _action.long())
+    #             pi, value = self.network(_state)
+    #             prob = pi.gather(1, _action.long())
 
-                # 정책신경망 손실함수 계산
-                ratio = prob / (_prob_old + 1e-7)
-                surr1 = ratio * _adv
-                surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * _adv
-                actor_loss = -torch.min(surr1, surr2).mean()
+    #             # 정책신경망 손실함수 계산
+    #             ratio = prob / (_prob_old + 1e-7)
+    #             surr1 = ratio * _adv
+    #             surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * _adv
+    #             actor_loss = -torch.min(surr1, surr2).mean()
 
-                # 가치신경망 손실함수 계산
-                critic_loss = F.mse_loss(value, _ret).mean()
+    #             # 가치신경망 손실함수 계산
+    #             critic_loss = F.mse_loss(value, _ret).mean()
 
-                total_loss = actor_loss + critic_loss
+    #             total_loss = actor_loss + critic_loss
 
-                self.optimizer.zero_grad()
-                total_loss.backward()
-                self.optimizer.step()
+    #             self.optimizer.zero_grad()
+    #             total_loss.backward()
+    #             self.optimizer.step()
 
-                actor_losses.append(actor_loss.item())
-                critic_losses.append(critic_loss.item())
+    #             actor_losses.append(actor_loss.item())
+    #             critic_losses.append(critic_loss.item())
 
-        return np.mean(actor_losses), np.mean(critic_losses)
+    #     return np.mean(actor_losses), np.mean(critic_losses)
 
     # 네트워크 모델 저장
     def save_model(self):
         print(f"... Save Model to {save_path}/ckpt ...")
-        # torch.save({
-        #     "network" : self.network.state_dict(),
-        #     "optimizer" : self.optimizer.state_dict(),
-        # }, save_path+'/ckpt')
+        obj = {}
+        for i in range(num_agents):
+            obj[f"actor_{i}"] = self.actors[i].state_dict()
+            obj[f"actor_optimizer_{i}"] = self.actor_optimizers[i].state_dict()
+        obj["critic"] = self.critic.state_dict()
+        obj["critic_optimizer"] = self.critic_optimizer.state_dict()
+        torch.save(obj, save_path+'/ckpt')
 
     # 학습 기록 
     def write_summary(self, score, actor_loss, critic_loss, step):
@@ -226,7 +222,7 @@ if __name__ == '__main__':
     # MAPOCA 클래스를 agent로 정의 
     agent = MAPOCAAgent()
     actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
-    active_agents , term_agents = dec.agent_id, 0
+    agents_id, active_agents, term_agents = dec.agent_id, list(range(num_agents)), 0
     for step in range(run_step + test_step):
         if step == run_step:
             if train_mode:
@@ -235,16 +231,18 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        state = dec.obs[0]
-        action = agent.get_action(state, train_mode)
-        action_tuple = ActionTuple()
-        action_tuple.add_discrete(action)
-        env.set_actions(behavior_name, action_tuple)
+        states = dec.obs[0]
+        actions = agent.get_action(states, active_agents, train_mode)
+        actions_tuple = ActionTuple()
+        actions_tuple.add_discrete(actions)
+        env.set_actions(behavior_name, actions_tuple)
         env.step()
         # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
-        next_state = dec.obs[0]
-        term_agents += len(term.agent_id)
+        next_states = dec.obs[0]
+        for term_agent_id in term.agent_id:
+            active_agents.remove(list(agents_id).index(term_agent_id))
+            term_agents += 1
         done = term_agents == num_agents
         reward = dec.reward
         score += sum(reward)
@@ -259,10 +257,9 @@ if __name__ == '__main__':
         #         critic_losses.append(critic_loss)
 
         if done:
-            print(active_agents)
             episode +=1
             scores.append(score)
-            active_agents, term_agents, score = dec.agent_id, 0, 0
+            agents_id, active_agents, term_agents, score = dec.agent_id, list(range(num_agents)), 0, 0
 
         #     # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
         #     if episode % print_interval == 0:
