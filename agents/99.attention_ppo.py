@@ -41,8 +41,9 @@ print_interval = 10
 save_interval = 100
 
 # 닷지 환경 설정
-env_config = {"ballSpeed": 4, "ballNums": 10, "ballRandom": 0.2,
-              "agentSpeed": 3, "boardRadius": 8}
+env_static_config = {"ballSpeed": 4, "ballRandom": 0.2, "agentSpeed": 3}
+env_dynamic_config = {"boardRadius": {"min":6, "max": 8, "seed": 77},
+                      "ballNums": {"min": 10, "max": 15, "seed": 77}}
 
 # 유니티 환경 경로 
 game = "Dodge_Attention"
@@ -79,16 +80,8 @@ class AttentionActorCritic(torch.nn.Module):
         ray, pos = torch.split(state, ray_chan_size * ray_feat_size, dim=1)
 
         b = ray.shape[0]
-        
-        # ray = ray.reshape(b, ray_chan_size, ray_feat_size)
-        # attn_mask = torch.sum(ray, dim=-1, keepdim=True) == 0
-        # attn_mask = attn_mask.repeat(num_heads,1,ray_chan_size)
-        # attn_mask = torch.logical_or(attn_mask, attn_mask.transpose(1, 2))
-        # attn_mask = attn_mask.type(torch.float32) * -100
-        
         ray = ray.reshape(b * ray_chan_size, ray_feat_size)
         attn_in = self.attn_in(ray).reshape(b, ray_chan_size, embed_size)
-        # attn_out = self.attn_layer(attn_in, src_mask=attn_mask)
         attn_out = self.attn_layer(attn_in)
 
         ray_embed = F.relu(self.attn_out(attn_out.reshape(b, -1)))
@@ -217,8 +210,11 @@ if __name__ == '__main__':
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
-    for key, value in env_config.items():
+    for key, value in env_static_config.items():
         environment_parameters_channel.set_float_parameter(key, value)
+    for key, value in env_dynamic_config.items():
+        environment_parameters_channel.set_uniform_sampler_parameters(
+                              key, value["min"], value["max"], value["seed"])
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
