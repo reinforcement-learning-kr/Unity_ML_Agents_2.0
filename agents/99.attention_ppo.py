@@ -10,15 +10,18 @@ from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
-
-# 파라미터 값 세팅
-state_size = 160 # Ray_info
-input_size = 2 + 128 + 128 # Agent_info(2) + MHA_input(128) + MHA_output(128)
-hidden_unit = 256
+# 파라미터 값 세팅 
+pos_state_size = 2
+ray_chan_size = 40 
+ray_feat_size = 4 
 action_size = 5
 
 RAY_OBS = 0
 POS_OBS = 1
+
+# attention parameter
+embed_size = 32
+num_heads = 4
 
 load_model = False
 train_mode = True
@@ -29,7 +32,7 @@ n_step = 512
 batch_size = 512
 n_epoch = 3
 _lambda = 0.95
-epsilon = 0.3
+epsilon = 0.2
 
 run_step = 2000000 if train_mode else 0
 test_step = 100000
@@ -37,8 +40,10 @@ test_step = 100000
 print_interval = 10
 save_interval = 100
 
-env_config = {"ballSpeed": 4, "ballNums": 10, "ballRandom": 0.2,
-              "agentSpeed": 3, "boardRadius": 8}
+# 닷지 환경 설정
+env_static_config = {"ballSpeed": 4, "ballRandom": 0.2, "agentSpeed": 3}
+env_dynamic_config = {"boardRadius": {"min":6, "max": 8, "seed": 77},
+                      "ballNums": {"min": 10, "max": 15, "seed": 77}}
 
 # 유니티 환경 경로 
 game = "Dodge_Attention"
@@ -51,7 +56,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/AttentionPPO/{date_time}"
-load_path = f"./saved_models/{game}/AttentionPPO/20230826165028"
+load_path = f"./saved_models/{game}/AttentionPPO/20230926075229"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -60,22 +65,29 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class AttentionActorCritic(torch.nn.Module):
     def __init__(self, **kwargs):
         super(AttentionActorCritic, self).__init__(**kwargs)
-        self.e1 = torch.nn.Linear(state_size, 128)
-        self.MHA = torch.nn.MultiheadAttention(128, 4)
+        self.attn_in = torch.nn.Linear(ray_feat_size, embed_size)
+        self.attn_layer = torch.nn.TransformerEncoderLayer(
+            d_model=embed_size, nhead=num_heads, batch_first=True, dim_feedforward=embed_size, dropout=0)
+        self.attn_out = torch.nn.Linear(ray_chan_size * embed_size, 128)
         
-        self.d1 = torch.nn.Linear(input_size, hidden_unit)
-        self.d2 = torch.nn.Linear(hidden_unit, hidden_unit)
-        self.pi = torch.nn.Linear(hidden_unit, action_size)
-        self.v = torch.nn.Linear(hidden_unit, 1)
+        self.e = torch.nn.Linear(pos_state_size, 128)
+        self.d1 = torch.nn.Linear(256, 128)
+        self.d2 = torch.nn.Linear(128, 128)
+        self.pi = torch.nn.Linear(128, action_size)
+        self.v = torch.nn.Linear(128, 1)
         
-    def forward(self, x, qkv):
-        qkv = self.e1(qkv).unsqueeze(dim=0)
-        attn_output, attn_output_weights = self.MHA(qkv, qkv, qkv)
-        
-        # 에이전트 상태(x), MHA의 입력값(qkv), 그리고 출력값(attn_output)를 하나의 벡터로 합침
-        x = torch.cat((x, qkv.squeeze(dim=0)), 1)
-        x = torch.cat((x, attn_output.squeeze(dim=0)), 1)
+    def forward(self, state):
+        ray, pos = torch.split(state, ray_chan_size * ray_feat_size, dim=1)
 
+        b = ray.shape[0]
+        ray = ray.reshape(b * ray_chan_size, ray_feat_size)
+        attn_in = self.attn_in(ray).reshape(b, ray_chan_size, embed_size)
+        attn_out = self.attn_layer(attn_in)
+
+        ray_embed = F.relu(self.attn_out(attn_out.reshape(b, -1)))
+        pos_embed = F.relu(self.e(pos))
+
+        x = torch.cat((pos_embed, ray_embed), dim=1)
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
@@ -95,42 +107,38 @@ class AttentionPPOAgent:
             self.optimizer.load_state_dict(checkpoint["optimizer"])
 
     # 정책을 통해 행동 결정 
-    def get_action(self, state, qkv, training=True):
+    def get_action(self, state, training=True):
         # 네트워크 모드 설정
         self.network.train(training)
 
         # 네트워크 연산에 따라 행동 결정
-        pi, _ = self.network(torch.FloatTensor(state).to(device), torch.FloatTensor(qkv).to(device))
+        pi, _ = self.network(torch.FloatTensor(state).to(device))
         action = torch.multinomial(pi, num_samples=1).cpu().numpy()
         return action
 
     # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
-    def append_sample(self, state, qkv, action, reward, next_state, next_qkv, done):
-        self.memory.append((state, qkv, action, reward, next_state, next_qkv, done))
+    def append_sample(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
 
     # 학습 수행
     def train_model(self):
         self.network.train()
 
         state      = np.stack([m[0] for m in self.memory], axis=0)
-        qkv        = np.stack([m[1] for m in self.memory], axis=0)
-        action     = np.stack([m[2] for m in self.memory], axis=0)
-        reward     = np.stack([m[3] for m in self.memory], axis=0)
-        next_state = np.stack([m[4] for m in self.memory], axis=0)
-        next_qkv   = np.stack([m[5] for m in self.memory], axis=0)
-        done       = np.stack([m[6] for m in self.memory], axis=0)
+        action     = np.stack([m[1] for m in self.memory], axis=0)
+        reward     = np.stack([m[2] for m in self.memory], axis=0)
+        next_state = np.stack([m[3] for m in self.memory], axis=0)
+        done       = np.stack([m[4] for m in self.memory], axis=0)
         self.memory.clear()
 
-        state, qkv, action, reward, next_state, next_qkv, done = \
-            map(lambda x: torch.FloatTensor(x).to(device),
-                [state, qkv, action, reward, next_state, next_qkv, done])
-                        
-        # pi_old, advantage 계산 
+        state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
+                                                        [state, action, reward, next_state, done])
+        # prob_old, adv, ret 계산 
         with torch.no_grad():
-            pi_old, value = self.network(state, qkv)
+            pi_old, value = self.network(state)
             prob_old = pi_old.gather(1, action.long())
 
-            _, next_value = self.network(next_state, next_qkv)
+            _, next_value = self.network(next_state)
             delta = reward + (1 - done) * discount_factor * next_value - value
             adv = delta.clone()
             adv, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, done])
@@ -148,10 +156,10 @@ class AttentionPPOAgent:
             for offset in range(0, len(reward), batch_size):
                 idx = idxs[offset : offset + batch_size]
 
-                _state, _qkv, _action, _ret, _adv, _prob_old =\
-                    map(lambda x: x[idx], [state, qkv, action, ret, adv, prob_old])
+                _state, _action, _ret, _adv, _prob_old =\
+                    map(lambda x: x[idx], [state, action, ret, adv, prob_old])
                 
-                pi, value = self.network(_state, _qkv)
+                pi, value = self.network(_state)
                 prob = pi.gather(1, _action.long())
 
                 # 정책신경망 손실함수 계산
@@ -202,9 +210,11 @@ if __name__ == '__main__':
     behavior_name = list(env.behavior_specs.keys())[0]
     spec = env.behavior_specs[behavior_name]
     engine_configuration_channel.set_configuration_parameters(time_scale=12.0)
-    for key, value in env_config.items():
+    for key, value in env_static_config.items():
         environment_parameters_channel.set_float_parameter(key, value)
-    
+    for key, value in env_dynamic_config.items():
+        environment_parameters_channel.set_uniform_sampler_parameters(
+                              key, value["min"], value["max"], value["seed"])
     dec, term = env.get_steps(behavior_name)
     num_worker = len(dec)
 
@@ -219,11 +229,9 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        # 현재 상태(state, qkv)에 따른 행동(action) 추론
-        qkv_preprocessing = lambda x : x.reshape((x.shape[0], -1))
-        qkv = qkv_preprocessing(dec.obs[RAY_OBS])
-        state = dec.obs[POS_OBS]
-        action = agent.get_action(state, qkv, train_mode)
+        preprocess = lambda ray, pos: np.concatenate((ray.reshape(-1, ray_chan_size * ray_feat_size), pos), axis=1)
+        state = preprocess(dec.obs[RAY_OBS], dec.obs[POS_OBS])
+        action = agent.get_action(state, train_mode)
         action_tuple = ActionTuple()
         action_tuple.add_discrete(action)
         env.set_actions(behavior_name, action_tuple)
@@ -232,23 +240,20 @@ if __name__ == '__main__':
         # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
         done = [False] * num_worker
-        next_qkv = qkv_preprocessing(dec.obs[RAY_OBS])
-        next_state = dec.obs[POS_OBS]
+        next_state = preprocess(dec.obs[RAY_OBS], dec.obs[POS_OBS])
         reward = dec.reward
-        if len(term.agent_id) > 0 :
-            term_qkv = qkv_preprocessing(term.obs[RAY_OBS])
+        if len(term):
+            next_term_state = preprocess(term.obs[RAY_OBS], term.obs[POS_OBS])
         for id in term.agent_id:
             _id = list(term.agent_id).index(id)
             done[id] = True
-            next_qkv[id] = term_qkv[_id]
-            next_state[id] =  term.obs[POS_OBS][_id]
+            next_state[id] = next_term_state[_id]
             reward[id] = term.reward[_id]
         score += reward[0]
 
         if train_mode:
             for id in range(num_worker):
-                agent.append_sample(state[id], qkv[id], action[id],
-                                    [reward[id]], next_state[id], next_qkv[id], [done[id]])
+                agent.append_sample(state[id], action[id], [reward[id]], next_state[id], [done[id]])
             # 학습수행
             if (step+1) % n_step == 0:
                 actor_loss, critic_loss = agent.train_model()
