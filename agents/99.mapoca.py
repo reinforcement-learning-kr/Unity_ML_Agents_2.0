@@ -9,10 +9,13 @@ from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 # 파라미터 값 세팅 
-actor_state_size = 651
+state_size = 651
 action_size = 5
 num_agents = 3
-critic_state_size = actor_state_size * num_agents
+
+# attention parameter
+embed_size = 32
+num_heads = 4
 
 load_model = False
 train_mode = True
@@ -51,7 +54,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class Actor(torch.nn.Module):
     def __init__(self, **kwargs):
         super(Actor, self).__init__(**kwargs)
-        self.d1 = torch.nn.Linear(actor_state_size, 128)
+        self.d1 = torch.nn.Linear(state_size, 128)
         self.d2 = torch.nn.Linear(128, 128)
         self.pi = torch.nn.Linear(128, action_size)
         
@@ -64,28 +67,41 @@ class Actor(torch.nn.Module):
 class Critic(torch.nn.Module):
     def __init__(self, **kwargs):
         super(Critic, self).__init__(**kwargs)
-        # Residual Self Attention
-        self.query = torch.nn.Linear(critic_state_size, 128)
-        self.key = torch.nn.Linear(critic_state_size, 128)
-        self.value = torch.nn.Linear(critic_state_size, 128)
-        self.MHA = torch.nn.MultiheadAttention(128, 4)
-        self.out = torch.nn.Linear(128, critic_state_size)
-
-        # Linear Layer
-        self.d1 = torch.nn.Linear(critic_state_size, 128)
-        self.d2 = torch.nn.Linear(128, 128)
+        self.g = torch.nn.ModuleList([torch.nn.Linear(state_size, embed_size) for _ in range(num_agents)])
+        self.v_rsa = torch.nn.TransformerEncoderLayer(
+            d_model=embed_size, nhead=num_heads, batch_first=True, dim_feedforward=embed_size, dropout=0)
+        self.v_d1 = torch.nn.Linear(num_agents * embed_size, 128)
+        self.v_d2 = torch.nn.Linear(128, 128)
         self.v = torch.nn.Linear(128, 1)
         
-    def forward(self, x):
-        q = self.query(x).unsqueeze(dim=0)
-        k = self.key(x).unsqueeze(dim=0)
-        v = self.value(x).unsqueeze(dim=0)
-        attn_output, attn_output_weights = self.MHA(q, k, v)
-        x = self.out(attn_output.squeeze(dim=0)) + x
+        self.f = torch.nn.ModuleList([torch.nn.Linear(state_size + action_size, embed_size) for _ in range(num_agents)])
+        self.q_rsa = torch.nn.TransformerEncoderLayer(
+            d_model=2*embed_size, nhead=num_heads, batch_first=True, dim_feedforward=embed_size, dropout=0)
+        self.q_d1 = torch.nn.Linear(num_agents * 2*embed_size, 128)
+        self.q_d2 = torch.nn.Linear(128, 128)
+        self.q = torch.nn.Linear(128, num_agents)
         
-        x = F.relu(self.d1(x))
-        x = F.relu(self.d2(x))
-        return self.v(x)
+        
+    def forward(self, states, actions):
+        b = states.shape[0]
+        
+        states = [s.reshape(b, state_size) for s in torch.split(states, 1, dim=1)]
+        s_embed = [g(s) for g, s in zip(self.g, states)]
+        v_h = self.v_rsa(torch.stack(s_embed, dim=1))
+        v_h = F.relu(self.v_d1(v_h.reshape(b, -1)))        
+        v_h = F.relu(self.v_d2(v_h))
+        
+        active_actions = actions != -1
+        actions = torch.where(active_actions, actions, 0)
+        actions = F.one_hot(actions.long(), num_classes=action_size).reshape(b, num_agents, action_size)
+        actions *= active_actions
+        actions = torch.split(actions, 1, dim=1)
+        sa_embed = [f(torch.cat((s,a.reshape(b, action_size)), dim=1)) for f, s, a in zip(self.f, states, actions)]
+        q_h = self.q_rsa(torch.cat((torch.stack(s_embed, dim=1), torch.stack(sa_embed, dim=1)), dim=2))
+        q_h = F.relu(self.q_d1(q_h.reshape(b, -1)))
+        q_h = F.relu(self.q_d2(q_h))
+        
+        return self.v(v_h), self.q(q_h)
 
 # MAPOCAAgent 클래스 -> MAPOCA 알고리즘을 위한 다양한 함수 정의 
 class MAPOCAAgent:
@@ -120,8 +136,8 @@ class MAPOCAAgent:
         return np.array(actions).reshape((len(active_agents), 1))
 
     # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
-    def append_sample(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
+    def append_sample(self, state, action, reward, next_state, done, active):
+        self.memory.append((state, action, reward, next_state, done, active))
 
     # 학습 수행
     # def train_model(self):
@@ -134,11 +150,14 @@ class MAPOCAAgent:
     #     reward     = np.stack([m[2] for m in self.memory], axis=0)
     #     next_state = np.stack([m[3] for m in self.memory], axis=0)
     #     done       = np.stack([m[4] for m in self.memory], axis=0)
+    #     active     = np.stack([m[5] for m in self.memory], axis=0)
     #     self.memory.clear()
 
-    #     state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
-    #                                                     [state, action, reward, next_state, done])
-    #     # prob_old, adv, ret 계산 
+    #     state, action, reward, next_state, done, active = map(lambda x: torch.FloatTensor(x).to(device),
+    #                                                     [state, action, reward, next_state, done, active])
+        
+    #    self.critic(state, action)
+    #    # prob_old, adv, ret 계산 
     #     with torch.no_grad():
     #         pi_old, value = self.network(state)
     #         prob_old = pi_old.gather(1, action.long())
@@ -240,22 +259,37 @@ if __name__ == '__main__':
         # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
         next_states = dec.obs[0]
+        next_active_agents = active_agents.copy()
         for term_agent_id in term.agent_id:
-            active_agents.remove(list(agents_id).index(term_agent_id))
+            next_active_agents.remove(list(agents_id).index(term_agent_id))
             term_agents += 1
         done = term_agents == num_agents
         reward = dec.reward
-        score += sum(reward)
+        global_reward = sum(reward)
+        score += global_reward
 
-        # if train_mode:
-        #     for id in range(num_worker):
-        #         agent.append_sample(state[id], action[id], [reward[id]], next_state[id], [done[id]])
-        #     # 학습수행
-        #     if (step+1) % n_step == 0:
-        #         actor_loss, critic_loss = agent.train_model()
-        #         actor_losses.append(actor_loss)
-        #         critic_losses.append(critic_loss)
-
+        if train_mode:
+            _states = np.zeros((num_agents, state_size))
+            _actions = -np.ones((num_agents, 1))
+            _active_agents = np.zeros((num_agents, 1))
+            for i in active_agents:
+                _states[i] = states[active_agents.index(i)]
+                _actions[i] = actions[active_agents.index(i)]
+                _active_agents[i] = 1
+            _next_states = np.zeros((num_agents, state_size))
+            for i in next_active_agents:
+                _next_states[i] = next_states[next_active_agents.index(i)]
+            agent.append_sample(_states, _actions, [global_reward], _next_states, [done], _active_agents)
+            
+            # 학습수행
+            # if (step+1) % n_step == 0:
+            #     agent.train_model()
+            #     actor_loss, critic_loss = agent.train_model()
+            #     actor_losses.append(actor_loss)
+            #     critic_losses.append(critic_loss)
+        
+        active_agents = next_active_agents
+        
         if done:
             episode +=1
             scores.append(score)
