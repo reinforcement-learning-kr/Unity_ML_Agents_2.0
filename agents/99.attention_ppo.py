@@ -67,7 +67,8 @@ class AttentionActorCritic(torch.nn.Module):
         super(AttentionActorCritic, self).__init__(**kwargs)
         self.attn_in = torch.nn.Linear(ray_feat_size, embed_size)
         self.attn_layer = torch.nn.TransformerEncoderLayer(
-            d_model=embed_size, nhead=num_heads, batch_first=True, dim_feedforward=embed_size, dropout=0)
+            d_model=embed_size, nhead=num_heads, batch_first=True,
+            dim_feedforward=embed_size, dropout=0)
         self.attn_out = torch.nn.Linear(ray_chan_size * embed_size, 128)
         
         self.e = torch.nn.Linear(pos_state_size, 128)
