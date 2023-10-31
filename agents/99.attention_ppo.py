@@ -17,7 +17,7 @@ ray_feat_size = 4
 action_size = 5
 
 RAY_OBS = 0
-POS_OBS = 1
+VEL_OBS = 1
 
 # attention parameter
 embed_size = 32
@@ -231,7 +231,7 @@ if __name__ == '__main__':
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
         preprocess = lambda ray, vel: np.concatenate((ray.reshape(-1, ray_chan_size * ray_feat_size), vel), axis=1)
-        state = preprocess(dec.obs[RAY_OBS], dec.obs[POS_OBS])
+        state = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
         action = agent.get_action(state, train_mode)
         action_tuple = ActionTuple()
         action_tuple.add_discrete(action)
@@ -241,10 +241,10 @@ if __name__ == '__main__':
         # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
         done = [False] * num_worker
-        next_state = preprocess(dec.obs[RAY_OBS], dec.obs[POS_OBS])
+        next_state = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
         reward = dec.reward
         if len(term):
-            next_term_state = preprocess(term.obs[RAY_OBS], term.obs[POS_OBS])
+            next_term_state = preprocess(term.obs[RAY_OBS], term.obs[VEL_OBS])
         for id in term.agent_id:
             _id = list(term.agent_id).index(id)
             done[id] = True
