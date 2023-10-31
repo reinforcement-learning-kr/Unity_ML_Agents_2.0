@@ -11,7 +11,7 @@ from mlagents_envs.side_channel.engine_configuration_channel\
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
-pos_state_size = 2
+vel_state_size = 2
 ray_chan_size = 40 
 ray_feat_size = 4 
 action_size = 5
@@ -56,7 +56,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/AttentionPPO/{date_time}"
-load_path = f"./saved_models/{game}/AttentionPPO/20230926075229"
+load_path = f"./saved_models/{game}/AttentionPPO/20231016071056"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -71,14 +71,14 @@ class AttentionActorCritic(torch.nn.Module):
             dim_feedforward=embed_size, dropout=0)
         self.attn_out = torch.nn.Linear(ray_chan_size * embed_size, 128)
         
-        self.e = torch.nn.Linear(pos_state_size, 128)
+        self.e = torch.nn.Linear(vel_state_size, 128)
         self.d1 = torch.nn.Linear(256, 128)
         self.d2 = torch.nn.Linear(128, 128)
         self.pi = torch.nn.Linear(128, action_size)
         self.v = torch.nn.Linear(128, 1)
         
     def forward(self, state):
-        ray, pos = torch.split(state, ray_chan_size * ray_feat_size, dim=1)
+        ray, vel = torch.split(state, ray_chan_size * ray_feat_size, dim=1)
 
         b = ray.shape[0]
         ray = ray.reshape(b * ray_chan_size, ray_feat_size)
@@ -86,9 +86,9 @@ class AttentionActorCritic(torch.nn.Module):
         attn_out = self.attn_layer(attn_in)
 
         ray_embed = F.relu(self.attn_out(attn_out.reshape(b, -1)))
-        pos_embed = F.relu(self.e(pos))
+        vel_embed = F.relu(self.e(vel))
 
-        x = torch.cat((pos_embed, ray_embed), dim=1)
+        x = torch.cat((vel_embed, ray_embed), dim=1)
         x = F.relu(self.d1(x))
         x = F.relu(self.d2(x))
         return F.softmax(self.pi(x), dim=-1), self.v(x)
@@ -230,7 +230,7 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        preprocess = lambda ray, pos: np.concatenate((ray.reshape(-1, ray_chan_size * ray_feat_size), pos), axis=1)
+        preprocess = lambda ray, vel: np.concatenate((ray.reshape(-1, ray_chan_size * ray_feat_size), vel), axis=1)
         state = preprocess(dec.obs[RAY_OBS], dec.obs[POS_OBS])
         action = agent.get_action(state, train_mode)
         action_tuple = ActionTuple()
