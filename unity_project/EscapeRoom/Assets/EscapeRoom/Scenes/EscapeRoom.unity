@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.44657838, g: 0.49641234, b: 0.57481676, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -178,6 +178,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Area (4)
       objectReference: {fileID: 0}
+    - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
 --- !u!1001 &285162243
@@ -234,6 +238,10 @@ PrefabInstance:
     - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
       propertyPath: m_Name
       value: Area (8)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
@@ -292,6 +300,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Area (2)
       objectReference: {fileID: 0}
+    - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
 --- !u!1001 &514047389
@@ -349,6 +361,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Area (1)
       objectReference: {fileID: 0}
+    - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
 --- !u!1001 &596547810
@@ -405,6 +421,10 @@ PrefabInstance:
     - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
       propertyPath: m_Name
       value: Area (6)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
@@ -639,6 +659,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Area (7)
       objectReference: {fileID: 0}
+    - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
 --- !u!1001 &1135601791
@@ -696,6 +720,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Area (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
 --- !u!1001 &1182458691
@@ -752,6 +780,10 @@ PrefabInstance:
     - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
       propertyPath: m_Name
       value: Area (5)
+      objectReference: {fileID: 0}
+    - target: {fileID: 4705009038656180299, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 504323196c10f43b1aea9ed85fe7191d, type: 3}
