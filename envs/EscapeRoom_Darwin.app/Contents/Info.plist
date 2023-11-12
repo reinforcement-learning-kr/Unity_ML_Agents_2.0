@@ -7,7 +7,7 @@
     <key>CFBundleExecutable</key>
     <string>EscapeRoom</string>
     <key>CFBundleGetInfoString</key>
-    <string>Unity Player version 2021.1.28f1 (f3f9dc10f3dd). (c) 2021 Unity Technologies ApS. All rights reserved.</string>
+    <string>Unity Player version 2021.1.18f1 (25bdc3efbc2d). (c) 2021 Unity Technologies ApS. All rights reserved.</string>
     <key>CFBundleIconFile</key>
     <string>PlayerIcon.icns</string>
     <key>CFBundleIdentifier</key>
@@ -40,6 +40,6 @@
     <key>NSPrincipalClass</key>
     <string>PlayerApplication</string>
     <key>UnityBuildNumber</key>
-    <string>f3f9dc10f3dd</string>
+    <string>25bdc3efbc2d</string>
   </dict>
 </plist>

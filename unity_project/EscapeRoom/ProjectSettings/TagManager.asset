@@ -5,8 +5,9 @@ TagManager:
   serializedVersion: 2
   tags:
   - agent
-  - wall
+  - ground
   - trap
+  - wall
   - door
   - goal
   layers:
