@@ -1,7 +1,7 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using Unity.MLAgents;
-using System.Collections.Generic;
 
 public class EnvController : MonoBehaviour
 {
@@ -10,32 +10,30 @@ public class EnvController : MonoBehaviour
     {
         public BlockAgent Agent;
         [HideInInspector] public Vector3 StartingPos;
-        [HideInInspector] public Quaternion StartingRot;
         [HideInInspector] public Rigidbody RbAgent;
     }
 
     public List<PlayerInfo> AgentList = new List<PlayerInfo>();
-    public int MaxEnvironmentSteps = 25000;
+    public int MaxEnvironmentSteps = 2000;
     public GameObject Ground = null;
     public GameObject Door = null;
     public Transform TrapTr = null;
 
+    private int trap_dir = 1;
     private int resetTimer;
     private Bounds areaBounds;
-    private Dictionary<BlockAgent, PlayerInfo> playerDict = new Dictionary<BlockAgent, PlayerInfo>();
+
     private SimpleMultiAgentGroup agentGroup;
-    private int numberOfRemainPlayers;
-    private float spawnAreaMarginMultiplier = 0.9f;
+    public int numberOfRemainPlayers;
+    private float spawnAreaMarginMultiplier = 0.8f;
 
-    private void Start()
+    void Start()
     {
-
         areaBounds = Ground.GetComponent<Collider>().bounds;
         agentGroup = new SimpleMultiAgentGroup();
         foreach (var block in AgentList)
         {
             block.StartingPos = block.Agent.transform.position;
-            block.StartingRot = block.Agent.transform.rotation;
             block.RbAgent = block.Agent.GetComponent<Rigidbody>();
             agentGroup.RegisterAgent(block.Agent);
         }
@@ -44,22 +42,23 @@ public class EnvController : MonoBehaviour
         ResetScene();
     }
 
-    private void FixedUpdate()
+    void FixedUpdate()
     {
         resetTimer += 1;
         if (resetTimer >= MaxEnvironmentSteps && MaxEnvironmentSteps > 0)
         {
             agentGroup.GroupEpisodeInterrupted();
-            ResetScene();
+            ResetScene(); 
         }
+
+        MoveTrap();
     }
 
     public void GoalReached()
     {
         agentGroup.AddGroupReward(1f);
-        Debug.Log("Goal arrived");
         agentGroup.EndGroupEpisode();
-        ResetScene();
+        ResetScene(); 
     }
 
     public void OpenDoor()
@@ -69,7 +68,7 @@ public class EnvController : MonoBehaviour
 
     public void CloseDoor()
     {
-        Door.gameObject.SetActive(true);
+        Door.gameObject.SetActive(true); 
     }
 
     public void KilledByTrap(BlockAgent agent)
@@ -77,66 +76,83 @@ public class EnvController : MonoBehaviour
         numberOfRemainPlayers--;
         if (numberOfRemainPlayers == 0)
         {
-            Debug.Log("End game...");
             agentGroup.EndGroupEpisode();
             ResetScene();
         }
         else
         {
-            Debug.Log($"Remain players : {numberOfRemainPlayers}");
             agent.gameObject.SetActive(false);
-            OpenDoor();
+            OpenDoor(); 
         }
+    }
+
+    public void MoveTrap()
+    {
+        if (trap_dir == 1 && TrapTr.position.x >= 12)
+        {
+            trap_dir = -1;
+        }
+
+        if (trap_dir == -1 && TrapTr.position.x <= -12)
+        {
+            trap_dir = 1;
+        }
+
+        TrapTr.position = new Vector3(TrapTr.position.x + trap_dir*0.1f, TrapTr.position.y, TrapTr.position.z); 
+    }
+
+    private List<Vector2> GetRandomSpawnPos()
+    {
+        List<Vector2> randPosList = new List<Vector2>(); ;
+        for (int i = 0; i < 4; ++i)
+        {
+            Vector2 randPos = new Vector2();
+            while (true)
+            {
+                randPos = new Vector2(Ground.transform.position.x, Ground.transform.position.z) + new Vector2(
+                    UnityEngine.Random.Range(-areaBounds.extents.x * spawnAreaMarginMultiplier, areaBounds.extents.x * spawnAreaMarginMultiplier),
+                    UnityEngine.Random.Range(-areaBounds.extents.z * spawnAreaMarginMultiplier, areaBounds.extents.z * spawnAreaMarginMultiplier));
+
+                bool again = false;
+                foreach (Vector2 tmpPos in randPosList)
+                {
+                    if (Vector2.Distance(tmpPos, randPos) <= 5.0)
+                    {
+                        again = true;
+                        break;
+                    }
+                }
+
+                if (!again) { break; }
+            }
+            randPosList.Add(randPos);
+        }
+        return randPosList;
     }
 
     private void ResetScene()
     {
-        TrapTr.position = GetRandomSpawnPos(yPos: 0.01f, extensionSize: 6f);
+        List<Vector2> randPosList = GetRandomSpawnPos();
 
+        TrapTr.position = new Vector3(randPosList[0].x, 0.01f, randPosList[0].y);
+
+        int index = 1;
         foreach (var agent in AgentList)
         {
-            var pos = GetRandomSpawnPos(yPos: 0.5f, extensionSize: 1.5f);
-            var rot = GetRandomRot();
+            var pos = new Vector3(randPosList[index].x, 0.5f, randPosList[index].y);
 
-            agent.Agent.transform.SetPositionAndRotation(pos, rot);
+            agent.Agent.transform.position = pos;
+
             agent.RbAgent.velocity = Vector3.zero;
             agent.RbAgent.angularVelocity = Vector3.zero;
             agent.Agent.gameObject.SetActive(true);
 
             agentGroup.RegisterAgent(agent.Agent);
+            index++;
         }
         resetTimer = 0;
 
         numberOfRemainPlayers = AgentList.Count;
         CloseDoor();
     }
-
-    private Vector3 GetRandomSpawnPos(float yPos, float extensionSize)
-    {
-        var foundNewSpawnLocation = false;
-        var randomSpawnPos = Vector3.zero;
-
-        while (foundNewSpawnLocation == false)
-        {
-            var randomPosX = UnityEngine.Random.Range(-areaBounds.extents.x * spawnAreaMarginMultiplier,
-                areaBounds.extents.x * spawnAreaMarginMultiplier);
-
-            var randomPosZ = UnityEngine.Random.Range(-areaBounds.extents.z * spawnAreaMarginMultiplier,
-                areaBounds.extents.z * spawnAreaMarginMultiplier);
-            randomSpawnPos = Ground.transform.position + new Vector3(randomPosX, 0.5f, randomPosZ);
-
-            if (Physics.CheckBox(randomSpawnPos, new Vector3(extensionSize, 0.01f, extensionSize)) == false)
-            {
-                foundNewSpawnLocation = true;
-            }
-        }
-        randomSpawnPos.y = yPos;
-        return randomSpawnPos;
-    }
-
-    private Quaternion GetRandomRot()
-    {
-        return Quaternion.Euler(0, UnityEngine.Random.Range(0.0f, 360.0f), 0);
-    }
-
 }

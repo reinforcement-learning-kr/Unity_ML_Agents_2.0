@@ -1,35 +1,34 @@
 using UnityEngine;
 using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
+using Unity.MLAgents.Sensors;
 
 public class BlockAgent : Agent
 {
-
     private Rigidbody agentRb;
     private EnvController envController;
-    private float runSpeed = 1f;
+    private float runSpeed = 2.5f;
 
-    private void OnCollisionEnter(Collision collision)
+    public float DecisionWaitingTime = 0.01f;
+    float m_currentTime = 0f;
+
+    public override void Initialize()
     {
-        if (collision.gameObject.CompareTag("goal"))
-        {
-            envController.GoalReached();
-        }
+        envController = GetComponentInParent<EnvController>();
+        agentRb = GetComponent<Rigidbody>();
+
+        Academy.Instance.AgentPreStep += WaitTimeInference;
     }
 
-    private void OnTriggerEnter(Collider collision)
+    public override void CollectObservations(VectorSensor sensor)
     {
-
-        if (collision.transform.CompareTag("trap"))
-        {
-            envController.KilledByTrap(this);
-        }
+        sensor.AddObservation(envController.numberOfRemainPlayers);
+        sensor.AddObservation(agentRb.velocity);
     }
 
     private void MoveAgent(ActionSegment<int> act)
     {
         var dirToGo = Vector3.zero;
-        var rotateDir = Vector3.zero;
 
         var action = act[0];
 
@@ -42,27 +41,13 @@ public class BlockAgent : Agent
                 dirToGo = transform.forward * -1f;
                 break;
             case 3:
-                rotateDir = transform.up * 1f;
+                dirToGo = transform.right * -1f;
                 break;
             case 4:
-                rotateDir = transform.up * -1f;
-                break;
-            case 5:
-                dirToGo = transform.right * -0.75f;
-                break;
-            case 6:
-                dirToGo = transform.right * 0.75f;
+                dirToGo = transform.right * 1f;
                 break;
         }
-        transform.Rotate(rotateDir, Time.fixedDeltaTime * 200f);
-        agentRb.AddForce(dirToGo * runSpeed,
-            ForceMode.VelocityChange);
-    }
-
-    public override void Initialize()
-    {
-        envController = GetComponentInParent<EnvController>();
-        agentRb = GetComponent<Rigidbody>();
+        agentRb.AddForce(dirToGo * runSpeed, ForceMode.VelocityChange);
     }
 
     public override void OnActionReceived(ActionBuffers actionBuffers)
@@ -70,24 +55,60 @@ public class BlockAgent : Agent
         MoveAgent(actionBuffers.DiscreteActions);
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("goal"))
+        {
+            envController.GoalReached();
+        }
+    }
+
+    private void OnTriggerEnter(Collider collision)
+    {
+        if (collision.gameObject.CompareTag("trap"))
+        {
+            envController.KilledByTrap(this);
+        }
+    }
+
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         var discreteActionsOut = actionsOut.DiscreteActions;
-        if (Input.GetKey(KeyCode.D))
-        {
-            discreteActionsOut[0] = 3;
-        }
-        else if (Input.GetKey(KeyCode.W))
+        if (Input.GetKey(KeyCode.W))
         {
             discreteActionsOut[0] = 1;
-        }
-        else if (Input.GetKey(KeyCode.A))
-        {
-            discreteActionsOut[0] = 4;
         }
         else if (Input.GetKey(KeyCode.S))
         {
             discreteActionsOut[0] = 2;
+        }
+        else if (Input.GetKey(KeyCode.A))
+        {
+            discreteActionsOut[0] = 3;
+        }
+        else if (Input.GetKey(KeyCode.D))
+        {
+            discreteActionsOut[0] = 4;
+        }
+    }
+
+    public void WaitTimeInference(int action)
+    {
+        if (Academy.Instance.IsCommunicatorOn)
+        {
+            RequestDecision();
+        }
+        else
+        {
+            if (m_currentTime >= DecisionWaitingTime)
+            {
+                m_currentTime = 0f;
+                RequestDecision();
+            }
+            else
+            {
+                m_currentTime += Time.fixedDeltaTime;
+            }
         }
     }
 }
