@@ -79,10 +79,9 @@ class Critic(torch.nn.Module):
             d_model=2*embed_size, nhead=num_heads, batch_first=True, dim_feedforward=embed_size, dropout=0)
         self.q_d1 = torch.nn.Linear(num_agents * 2*embed_size, 128)
         self.q_d2 = torch.nn.Linear(128, 128)
-        self.q = torch.nn.Linear(128, num_agents)
+        self.q = torch.nn.Linear(128, 1)
         
-        
-    def forward(self, states, actions):
+    def forward(self, states):
         b = states.shape[0]
         
         states = [s.reshape(b, state_size) for s in torch.split(states, 1, dim=1)]
@@ -90,18 +89,33 @@ class Critic(torch.nn.Module):
         v_h = self.v_rsa(torch.stack(s_embed, dim=1))
         v_h = F.relu(self.v_d1(v_h.reshape(b, -1)))        
         v_h = F.relu(self.v_d2(v_h))
+        v = self.v(v_h)
+        
+        return v
+    
+    def compute_q(self, states, actions, agent_idx):
+        b = states.shape[0]
+        
+        states = [s.reshape(b, state_size) for s in torch.split(states, 1, dim=1)]
+        s_embed = [g(s) for g, s in zip(self.g, states)]
         
         active_actions = actions != -1
         actions = torch.where(active_actions, actions, 0)
-        actions = F.one_hot(actions.long(), num_classes=action_size).reshape(b, num_agents, action_size)
-        actions *= active_actions
-        actions = torch.split(actions, 1, dim=1)
-        sa_embed = [f(torch.cat((s,a.reshape(b, action_size)), dim=1)) for f, s, a in zip(self.f, states, actions)]
+        onehot_actions = F.one_hot(actions.long(), num_classes=action_size).reshape(b, num_agents, action_size)
+        onehot_actions *= active_actions
+        onehot_actions = torch.split(onehot_actions, 1, dim=1)
+        sa_embed = [f(torch.cat((s,a.reshape(b, action_size)), dim=1)) for f, s, a in zip(self.f, states, onehot_actions)]
+        for i in range(num_agents):
+            if i == agent_idx:
+                sa_embed[i] *= 0
+            else:
+                s_embed[i] *= 0
         q_h = self.q_rsa(torch.cat((torch.stack(s_embed, dim=1), torch.stack(sa_embed, dim=1)), dim=2))
         q_h = F.relu(self.q_d1(q_h.reshape(b, -1)))
         q_h = F.relu(self.q_d2(q_h))
+        q = self.q(q_h)
         
-        return self.v(v_h), self.q(q_h)
+        return q
 
 # MAPOCAAgent 클래스 -> MAPOCA 알고리즘을 위한 다양한 함수 정의 
 class MAPOCAAgent:
@@ -125,7 +139,7 @@ class MAPOCAAgent:
     # 정책을 통해 행동 결정 
     def get_action(self, states, active_agents, training=True):
         actions = []
-        for i, (state, active_agent) in enumerate(zip(states, active_agents)):
+        for state, active_agent in zip(states, active_agents):
             # 네트워크 모드 설정
             self.actors[active_agent].train(training)
 
@@ -136,75 +150,92 @@ class MAPOCAAgent:
         return np.array(actions).reshape((len(active_agents), 1))
 
     # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
-    def append_sample(self, state, action, reward, next_state, done, active):
-        self.memory.append((state, action, reward, next_state, done, active))
+    def append_sample(self, states, actions, reward, next_states, done, actives):
+        self.memory.append((states, actions, reward, next_states, done, actives))
 
     # 학습 수행
-    # def train_model(self):
-    #     for i in range(num_agents):
-    #         self.actors[i].train()
-    #     self.critic.train()
-
-    #     state      = np.stack([m[0] for m in self.memory], axis=0)
-    #     action     = np.stack([m[1] for m in self.memory], axis=0)
-    #     reward     = np.stack([m[2] for m in self.memory], axis=0)
-    #     next_state = np.stack([m[3] for m in self.memory], axis=0)
-    #     done       = np.stack([m[4] for m in self.memory], axis=0)
-    #     active     = np.stack([m[5] for m in self.memory], axis=0)
-    #     self.memory.clear()
-
-    #     state, action, reward, next_state, done, active = map(lambda x: torch.FloatTensor(x).to(device),
-    #                                                     [state, action, reward, next_state, done, active])
+    def train_model(self):
+        for actor in self.actors:
+            actor.train()
+        self.critic.train()
         
-    #    self.critic(state, action)
-    #    # prob_old, adv, ret 계산 
-    #     with torch.no_grad():
-    #         pi_old, value = self.network(state)
-    #         prob_old = pi_old.gather(1, action.long())
+        states      = np.stack([m[0] for m in self.memory], axis=0)
+        actions     = np.stack([m[1] for m in self.memory], axis=0)
+        reward      = np.stack([m[2] for m in self.memory], axis=0)
+        next_states = np.stack([m[3] for m in self.memory], axis=0)
+        done        = np.stack([m[4] for m in self.memory], axis=0)
+        actives     = np.stack([m[5] for m in self.memory], axis=0)
+        self.memory.clear()
 
-    #         _, next_value = self.network(next_state)
-    #         delta = reward + (1 - done) * discount_factor * next_value - value
-    #         adv = delta.clone()
-    #         adv, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, done])
-    #         for t in reversed(range(n_step-1)):
-    #             adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
-    #         adv = adv.transpose(0,1).contiguous().view(-1, 1)
+        states, actions, reward, next_states, done, actives = map(lambda x: torch.FloatTensor(x).to(device),
+                                                        [states, actions, reward, next_states, done, actives])
+        
+       # prob_old, adv, ret 계산 
+        with torch.no_grad():
+            value = self.critic(states)
+            next_value = self.critic(next_states)
+            delta = reward + (1 - done) * discount_factor * next_value - value
+            adv = delta.clone()
+            adv, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, done])
+            for t in reversed(range(n_step-1)):
+                adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
+            adv = adv.transpose(0,1).contiguous().view(-1, 1)
+            ret = adv + value
             
-    #         ret = adv + value
-
-    #     # 학습 이터레이션 시작
-    #     actor_losses, critic_losses = [], []
-    #     idxs = np.arange(len(reward))
-    #     for _ in range(n_epoch):
-    #         np.random.shuffle(idxs)
-    #         for offset in range(0, len(reward), batch_size):
-    #             idx = idxs[offset : offset + batch_size]
-
-    #             _state, _action, _ret, _adv, _prob_old =\
-    #                 map(lambda x: x[idx], [state, action, ret, adv, prob_old])
+            prob_olds = torch.zeros_like(actions)
+            for i in range(num_agents):
+                state, action, active = map(lambda x: x[:,i,:], [states, actions, actives])
+                pi_old = self.actors[i](state)
+                active_action = action * active
+                prob_old = pi_old.gather(1, active_action.long())
+                prob_olds[:,i,:] = prob_old
                 
-    #             pi, value = self.network(_state)
-    #             prob = pi.gather(1, _action.long())
+                
+        # 학습 이터레이션 시작
+        actors_losses, critic_losses = [[] for _ in range(num_agents)], []
+        idxs = np.arange(len(reward))
+        for _ in range(n_epoch):
+            np.random.shuffle(idxs)
+            for offset in range(0, len(reward), batch_size):
+                idx = idxs[offset : offset + batch_size]
 
-    #             # 정책신경망 손실함수 계산
-    #             ratio = prob / (_prob_old + 1e-7)
-    #             surr1 = ratio * _adv
-    #             surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * _adv
-    #             actor_loss = -torch.min(surr1, surr2).mean()
+                _states, _actions, _actives, _ret, _prob_olds =\
+                    map(lambda x: x[idx], [states, actions, actives, ret, prob_olds])
+                
+                baselines_loss = []
+                # 정책신경망 손실함수 계산
+                for i in range(num_agents):
+                    state, action, active, prob_old = map(lambda x: x[:,i,:], [_states, _actions, _actives, _prob_olds])
+                    pi = self.actors[i](state)
+                    active_action = action * active
+                    prob = pi.gather(1, active_action.long())
+                    ratio = prob / (prob_old + 1e-7)
+                    
+                    q = self.critic.compute_q(states, actions, i)
+                    adv = _ret - q
+                    
+                    surr1 = ratio * adv
+                    surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * adv
+                    actor_loss = -torch.min(surr1, surr2).mean()
+                    
+                    self.actor_optimizers[i].zero_grad()
+                    actor_loss.backward(retain_graph=True)
+                    self.actor_optimizers[i].step()
+                    
+                    actors_losses[i].append(actor_loss.item())
+                    baselines_loss.append(torch.mean(adv**2))
 
-    #             # 가치신경망 손실함수 계산
-    #             critic_loss = F.mse_loss(value, _ret).mean()
+                # 가치신경망 손실함수 계산
+                value = self.critic(states)
+                critic_loss = F.mse_loss(value, _ret).mean() + sum(baselines_loss)
 
-    #             total_loss = actor_loss + critic_loss
+                self.critic_optimizer.zero_grad()
+                critic_loss.backward()
+                self.critic_optimizer.step()
+                
+                critic_losses.append(critic_loss.item())
 
-    #             self.optimizer.zero_grad()
-    #             total_loss.backward()
-    #             self.optimizer.step()
-
-    #             actor_losses.append(actor_loss.item())
-    #             critic_losses.append(critic_loss.item())
-
-    #     return np.mean(actor_losses), np.mean(critic_losses)
+        return [np.mean(actor_losses) for actor_losses in actors_losses], np.mean(critic_losses)
 
     # 네트워크 모델 저장
     def save_model(self):
@@ -218,9 +249,10 @@ class MAPOCAAgent:
         torch.save(obj, save_path+'/ckpt')
 
     # 학습 기록 
-    def write_summary(self, score, actor_loss, critic_loss, step):
+    def write_summary(self, score, actors_loss, critic_loss, step):
         self.writer.add_scalar("run/score", score, step)
-        self.writer.add_scalar("model/actor_loss", actor_loss, step)
+        for i in range(num_agents):
+            self.writer.add_scalar(f"model/actor_{i}_loss", actors_loss[i], step)
         self.writer.add_scalar("model/critic_loss", critic_loss, step)
 
 # Main 함수 -> 전체적으로 PPO 알고리즘을 진행 
@@ -228,8 +260,7 @@ if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
     env = UnityEnvironment(file_name=env_name,
-                           side_channels=[engine_configuration_channel],
-                           base_port=7777)
+                           side_channels=[engine_configuration_channel])
     env.reset()
 
     # 유니티 behavior 설정 
@@ -240,7 +271,7 @@ if __name__ == '__main__':
     dec, term = env.get_steps(behavior_name)
     # MAPOCA 클래스를 agent로 정의 
     agent = MAPOCAAgent()
-    actor_losses, critic_losses, scores, episode, score = [], [], [], 0, 0
+    actors_losses, critic_losses, scores, episode, score = [[] for _ in range(num_agents)], [], [], 0, 0
     agents_id, active_agents, term_agents = dec.agent_id, list(range(num_agents)), 0
     for step in range(run_step + test_step):
         if step == run_step:
@@ -282,11 +313,11 @@ if __name__ == '__main__':
             agent.append_sample(_states, _actions, [global_reward], _next_states, [done], _active_agents)
             
             # 학습수행
-            # if (step+1) % n_step == 0:
-            #     agent.train_model()
-            #     actor_loss, critic_loss = agent.train_model()
-            #     actor_losses.append(actor_loss)
-            #     critic_losses.append(critic_loss)
+            if (step+1) % n_step == 0:
+                actors_loss, critic_loss = agent.train_model()
+                for i in range(num_agents):
+                    actors_losses[i].append(actors_loss[i])
+                critic_losses.append(critic_loss)
         
         active_agents = next_active_agents
         
@@ -295,18 +326,19 @@ if __name__ == '__main__':
             scores.append(score)
             agents_id, active_agents, term_agents, score = dec.agent_id, list(range(num_agents)), 0, 0
 
-        #     # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
-        #     if episode % print_interval == 0:
-        #         mean_score = np.mean(scores)
-        #         mean_actor_loss = np.mean(actor_losses) if len(actor_losses) > 0 else 0
-        #         mean_critic_loss = np.mean(critic_losses)  if len(critic_losses) > 0 else 0
-        #         agent.write_summary(mean_score, mean_actor_loss, mean_critic_loss, step)
-        #         actor_losses, critic_losses, scores = [], [], []
+            # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
+            if episode % print_interval == 0:
+                mean_score = np.mean(scores)
+                mean_actors_loss = [np.mean(actor_losses) for actor_losses in actors_losses] if len(actors_losses) > 0 else [0] * num_agents 
+                mean_critic_loss = np.mean(critic_losses)  if len(critic_losses) > 0 else 0
+                agent.write_summary(mean_score, mean_actors_loss, mean_critic_loss, step)
+                actors_losses, critic_losses, scores = [[] for _ in range(num_agents)], [], []
+                
+                actors_loss = [round(loss, 4) for loss in mean_actors_loss]
+                print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +\
+                      f"Actors loss: {actors_loss} / Critic loss: {mean_critic_loss:.4f}" )
 
-        #         print(f"{episode} Episode / Step: {step} / Score: {mean_score:.2f} / " +\
-        #               f"Actor loss: {mean_actor_loss:.2f} / Critic loss: {mean_critic_loss:.4f}" )
-
-        #     # 네트워크 모델 저장 
-        #     if train_mode and episode % save_interval == 0:
-        #         agent.save_model()
+            # 네트워크 모델 저장 
+            if train_mode and episode % save_interval == 0:
+                agent.save_model()
     env.close()
