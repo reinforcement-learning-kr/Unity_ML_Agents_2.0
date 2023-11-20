@@ -9,12 +9,15 @@ from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 # 파라미터 값 세팅 
-state_size = 651
+state_size = 651 + 4
 action_size = 5
 num_agents = 3
 
+RAY_OBS = 0
+VEL_OBS = 1
+
 # attention parameter
-embed_size = 32
+embed_size = 128
 num_heads = 4
 
 load_model = False
@@ -22,8 +25,8 @@ train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
-n_step = 128
-batch_size = 128
+n_step = 512
+batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
@@ -281,7 +284,8 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        states = dec.obs[0]
+        preprocess = lambda ray, vel: np.concatenate((ray, vel), axis=-1)
+        states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
         actions = agent.get_action(states, active_agents, train_mode)
         actions_tuple = ActionTuple()
         actions_tuple.add_discrete(actions)
@@ -289,7 +293,7 @@ if __name__ == '__main__':
         env.step()
         # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
-        next_states = dec.obs[0]
+        next_states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
         next_active_agents = active_agents.copy()
         for term_agent_id in term.agent_id:
             next_active_agents.remove(list(agents_id).index(term_agent_id))
