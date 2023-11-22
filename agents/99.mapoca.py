@@ -17,7 +17,7 @@ RAY_OBS = 0
 VEL_OBS = 1
 
 # attention parameter
-embed_size = 128
+embed_size = 64
 num_heads = 4
 
 load_model = False
@@ -100,19 +100,14 @@ class Critic(torch.nn.Module):
         b = states.shape[0]
         
         states = [s.reshape(b, state_size) for s in torch.split(states, 1, dim=1)]
-        s_embed = [g(s) for g, s in zip(self.g, states)]
+        s_embed = [g(s) if i == agent_idx else torch.zeros((b, embed_size)).to(device) for i, (g, s) in enumerate(zip(self.g, states))]
         
         active_actions = actions != -1
         actions = torch.where(active_actions, actions, 0)
         onehot_actions = F.one_hot(actions.long(), num_classes=action_size).reshape(b, num_agents, action_size)
         onehot_actions *= active_actions
         onehot_actions = torch.split(onehot_actions, 1, dim=1)
-        sa_embed = [f(torch.cat((s,a.reshape(b, action_size)), dim=1)) for f, s, a in zip(self.f, states, onehot_actions)]
-        for i in range(num_agents):
-            if i == agent_idx:
-                sa_embed[i] *= 0
-            else:
-                s_embed[i] *= 0
+        sa_embed = [torch.zeros((b, embed_size)).to(device) if i == agent_idx else f(torch.cat((s,a.reshape(b, action_size)), dim=1)) for i, (f, s, a) in enumerate(zip(self.f, states, onehot_actions))]
         q_h = self.q_rsa(torch.cat((torch.stack(s_embed, dim=1), torch.stack(sa_embed, dim=1)), dim=2))
         q_h = F.relu(self.q_d1(q_h.reshape(b, -1)))
         q_h = F.relu(self.q_d2(q_h))
