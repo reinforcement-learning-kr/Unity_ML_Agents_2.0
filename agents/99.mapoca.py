@@ -26,7 +26,7 @@ train_mode = True
 discount_factor = 0.99
 learning_rate = 3e-4
 n_step = 512
-batch_size = 512
+batch_size = 32
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
@@ -209,7 +209,7 @@ class MAPOCAAgent:
                     prob = pi.gather(1, active_action.long())
                     ratio = prob / (prob_old + 1e-7)
                     
-                    q = self.critic.compute_q(states, actions, i)
+                    q = self.critic.compute_q(_states, _actions, i)
                     adv = _ret - q
                     
                     surr1 = ratio * adv
@@ -224,7 +224,7 @@ class MAPOCAAgent:
                     baselines_loss.append(torch.mean(adv**2))
 
                 # 가치신경망 손실함수 계산
-                value = self.critic(states)
+                value = self.critic(_states)
                 critic_loss = F.mse_loss(value, _ret).mean() + sum(baselines_loss)
 
                 self.critic_optimizer.zero_grad()
