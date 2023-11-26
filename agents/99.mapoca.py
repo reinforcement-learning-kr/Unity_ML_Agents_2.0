@@ -20,8 +20,8 @@ VEL_OBS = 1
 embed_size = 64
 num_heads = 4
 
-load_model = False
-train_mode = True
+load_model = True
+train_mode = False
 
 discount_factor = 0.99
 learning_rate = 3e-4
@@ -48,7 +48,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/MAPOCA/{date_time}"
-load_path = f"./saved_models/{game}/MAPOCA/20230728125435"
+load_path = f"./saved_models/{game}/MAPOCA/20231126203827"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -295,8 +295,9 @@ if __name__ == '__main__':
             term_agents += 1
             
         done = term_agents == num_agents
-        global_reward = sum(term.group_reward) if done else \
-                        sum(dec.group_reward) + sum(term.group_reward)
+        rewards = list(term.group_reward) if done else \
+                    list(dec.group_reward) + list(term.group_reward)
+        global_reward = np.mean(rewards)
         score += global_reward
 
         if train_mode:
