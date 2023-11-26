@@ -26,7 +26,7 @@ train_mode = True
 discount_factor = 0.99
 learning_rate = 3e-4
 n_step = 512
-batch_size = 32
+batch_size = 64
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
@@ -293,9 +293,10 @@ if __name__ == '__main__':
         for term_agent_id in term.agent_id:
             next_active_agents.remove(list(agents_id).index(term_agent_id))
             term_agents += 1
+            
         done = term_agents == num_agents
-        reward = dec.reward
-        global_reward = sum(reward)
+        rewards = list(dec.reward) + list(term.reward)
+        global_reward = sum(rewards)
         score += global_reward
 
         if train_mode:
@@ -328,7 +329,7 @@ if __name__ == '__main__':
             # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
             if episode % print_interval == 0:
                 mean_score = np.mean(scores)
-                mean_actors_loss = [np.mean(actor_losses) for actor_losses in actors_losses] if len(actors_losses) > 0 else [0] * num_agents 
+                mean_actors_loss = [np.mean(actor_losses) if len(critic_losses) > 0 else 0 for actor_losses in actors_losses] 
                 mean_critic_loss = np.mean(critic_losses)  if len(critic_losses) > 0 else 0
                 agent.write_summary(mean_score, mean_actors_loss, mean_critic_loss, step)
                 actors_losses, critic_losses, scores = [[] for _ in range(num_agents)], [], []
