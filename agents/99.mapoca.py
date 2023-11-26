@@ -25,8 +25,8 @@ train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
-n_step = 512
-batch_size = 64
+n_step = 4096
+batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
@@ -295,8 +295,8 @@ if __name__ == '__main__':
             term_agents += 1
             
         done = term_agents == num_agents
-        rewards = list(dec.reward) + list(term.reward)
-        global_reward = sum(rewards)
+        global_reward = sum(term.group_reward) if done else \
+                        sum(dec.group_reward) + sum(term.group_reward)
         score += global_reward
 
         if train_mode:
