@@ -20,8 +20,8 @@ VEL_OBS = 1
 embed_size = 64
 num_heads = 4
 
-load_model = True
-train_mode = False
+load_model = False
+train_mode = True
 
 discount_factor = 0.99
 learning_rate = 3e-4
@@ -107,7 +107,8 @@ class Critic(torch.nn.Module):
         onehot_actions = F.one_hot(actions.long(), num_classes=action_size).reshape(b, num_agents, action_size)
         onehot_actions *= active_actions
         onehot_actions = torch.split(onehot_actions, 1, dim=1)
-        sa_embed = [torch.zeros((b, embed_size)).to(device) if i == agent_idx else f(torch.cat((s,a.reshape(b, action_size)), dim=1)) for i, (f, s, a) in enumerate(zip(self.f, states, onehot_actions))]
+        sa_embed = [torch.zeros((b, embed_size)).to(device) if i == agent_idx else \
+                    f(torch.cat((s,a.reshape(b, action_size)), dim=1)) for i, (f, s, a) in enumerate(zip(self.f, states, onehot_actions))]
         q_h = self.q_rsa(torch.cat((torch.stack(s_embed, dim=1), torch.stack(sa_embed, dim=1)), dim=2))
         q_h = F.relu(self.q_d1(q_h.reshape(b, -1)))
         q_h = F.relu(self.q_d2(q_h))
