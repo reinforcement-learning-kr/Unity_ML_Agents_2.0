@@ -17,21 +17,21 @@ RAY_OBS = 0
 VEL_OBS = 1
 
 # attention parameter
-embed_size = 64
+embed_size = 128
 num_heads = 4
 
 load_model = False
 train_mode = True
 
 discount_factor = 0.99
-learning_rate = 3e-4
+learning_rate = 1e-4
 n_step = 4096
 batch_size = 512
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
 
-run_step = 2000000 if train_mode else 0
+run_step = 1000000 if train_mode else 0
 test_step = 100000
 
 print_interval = 10
@@ -48,7 +48,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/MAPOCA/{date_time}"
-load_path = f"./saved_models/{game}/MAPOCA/20231126203827"
+load_path = f"./saved_models/{game}/MAPOCA/20231126224352"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
