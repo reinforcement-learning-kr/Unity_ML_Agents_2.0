@@ -8,13 +8,9 @@ from torch.utils.tensorboard import SummaryWriter
 from mlagents_envs.environment import UnityEnvironment, ActionTuple
 from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
-import os
-os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-
 # 파라미터 값 세팅 
-state_size = 651
-action_size = 5
+state_size = 315
+action_size = 7
 num_agents = 3
 
 # attention parameter
@@ -144,129 +140,71 @@ class MAPOCAAgent:
         self.memory.append((state, action, reward, next_state, done, active))
 
     # 학습 수행
-    def train_model(self):
-        for i in range(num_agents):
-            self.actors[i].train()
-        self.critic.train()
+    # def train_model(self):
+    #     for i in range(num_agents):
+    #         self.actors[i].train()
+    #     self.critic.train()
 
-        state      = np.stack([m[0] for m in self.memory], axis=0)
-        action     = np.stack([m[1] for m in self.memory], axis=0)
-        reward     = np.stack([m[2] for m in self.memory], axis=0)
-        next_state = np.stack([m[3] for m in self.memory], axis=0)
-        done       = np.stack([m[4] for m in self.memory], axis=0)
-        active     = np.stack([m[5] for m in self.memory], axis=0)
-        self.memory.clear()
+    #     state      = np.stack([m[0] for m in self.memory], axis=0)
+    #     action     = np.stack([m[1] for m in self.memory], axis=0)
+    #     reward     = np.stack([m[2] for m in self.memory], axis=0)
+    #     next_state = np.stack([m[3] for m in self.memory], axis=0)
+    #     done       = np.stack([m[4] for m in self.memory], axis=0)
+    #     active     = np.stack([m[5] for m in self.memory], axis=0)
+    #     self.memory.clear()
 
-        state, action, reward, next_state, done, active = map(lambda x: torch.FloatTensor(x).to(device),
-                                                        [state, action, reward, next_state, done, active])
+    #     state, action, reward, next_state, done, active = map(lambda x: torch.FloatTensor(x).to(device),
+    #                                                     [state, action, reward, next_state, done, active])
         
-        # Critic을 통해 상태 가치(state value)와 Q-값(q values) 계산
-        state_value, q_values = self.critic(state, action)
-        with torch.no_grad():
-            next_state_value, _ = self.critic(next_state, action)
+    #    self.critic(state, action)
+    #    # prob_old, adv, ret 계산 
+    #     with torch.no_grad():
+    #         pi_old, value = self.network(state)
+    #         prob_old = pi_old.gather(1, action.long())
 
-        td_target = reward + (1 - done) * discount_factor * next_state_value
-        delta = td_target - state_value
-        advantage = delta.clone()
-        for t in reversed(range(n_step-1)):
-            advantage[t] = advantage[t] + (1 - done[t]) * discount_factor * _lambda * advantage[t + 1]
-
-        advantage = advantage.view(-1, 1)
-        td_target = td_target.view(-1, 1)
-
-        actor_losses, critic_losses = [], []
-        for epoch in range(n_epoch):
-            for i in range(0, state.size(0), batch_size):
-                indices = slice(i, min(i + batch_size, state.size(0)))
-                batch_states, batch_actions, batch_td_targets, batch_advantages, batch_active = \
-                    state[indices], action[indices], td_target[indices], advantage[indices], active[indices]
-
-
-                # Get current policy and value outputs
-                state_value, q_value = self.critic(batch_states, batch_actions)
-
-                # Calculate ratio for PPO
-                pi_as = []
-                # ??
-
-                # Stack pi_a values for all actors and calculate PPO ratio
-                pi_a = torch.stack(pi_as, dim=1)
-                expanded_advantages = batch_advantages.repeat(1, num_agents)
-                ratio = torch.exp(torch.log(pi_a + 1e-10) - torch.log(expanded_advantages + 1e-10))
-
-                # Clipped objective
-                surr1 = ratio * batch_advantages
-                surr2 = torch.clamp(ratio, 1 - epsilon, 1 + epsilon) * batch_advantages
-
-                # Calculate actor (policy) and critic (value) losses
-                actor_loss = -torch.min(surr1, surr2).mean()
-                critic_loss = F.mse_loss(state_value, batch_td_targets)
-
-                # Update actor and critic networks
-                for actor_optimizer, actor in zip(self.actor_optimizers, self.actors):
-                    actor_optimizer.zero_grad()
-                    actor_loss.backward()
-                    actor_optimizer.step()
-
-                self.critic_optimizer.zero_grad()
-                critic_loss.backward()
-                self.critic_optimizer.step()
-
-                actor_losses.append(actor_loss.item())
-                critic_losses.append(critic_loss.item())
-
-        return np.mean(actor_losses), np.mean(critic_losses)
-    
-
-       # self.critic(state, action)
-       # prob_old, adv, ret 계산 
-        # with torch.no_grad():
-        #     pi_old, value = self.network(state)
-        #     prob_old = pi_old.gather(1, action.long())
-
-        #     _, next_value = self.network(next_state)
-        #     delta = reward + (1 - done) * discount_factor * next_value - value
-        #     adv = delta.clone()
-        #     adv, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, done])
-        #     for t in reversed(range(n_step-1)):
-        #         adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
-        #     adv = adv.transpose(0,1).contiguous().view(-1, 1)
+    #         _, next_value = self.network(next_state)
+    #         delta = reward + (1 - done) * discount_factor * next_value - value
+    #         adv = delta.clone()
+    #         adv, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, done])
+    #         for t in reversed(range(n_step-1)):
+    #             adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
+    #         adv = adv.transpose(0,1).contiguous().view(-1, 1)
             
-        #     ret = adv + value
+    #         ret = adv + value
 
-        # # 학습 이터레이션 시작
-        # actor_losses, critic_losses = [], []
-        # idxs = np.arange(len(reward))
-        # for _ in range(n_epoch):
-        #     np.random.shuffle(idxs)
-        #     for offset in range(0, len(reward), batch_size):
-        #         idx = idxs[offset : offset + batch_size]
+    #     # 학습 이터레이션 시작
+    #     actor_losses, critic_losses = [], []
+    #     idxs = np.arange(len(reward))
+    #     for _ in range(n_epoch):
+    #         np.random.shuffle(idxs)
+    #         for offset in range(0, len(reward), batch_size):
+    #             idx = idxs[offset : offset + batch_size]
 
-        #         _state, _action, _ret, _adv, _prob_old =\
-        #             map(lambda x: x[idx], [state, action, ret, adv, prob_old])
+    #             _state, _action, _ret, _adv, _prob_old =\
+    #                 map(lambda x: x[idx], [state, action, ret, adv, prob_old])
                 
-        #         pi, value = self.network(_state)
-        #         prob = pi.gather(1, _action.long())
+    #             pi, value = self.network(_state)
+    #             prob = pi.gather(1, _action.long())
 
-        #         # 정책신경망 손실함수 계산
-        #         ratio = prob / (_prob_old + 1e-7)
-        #         surr1 = ratio * _adv
-        #         surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * _adv
-        #         actor_loss = -torch.min(surr1, surr2).mean()
+    #             # 정책신경망 손실함수 계산
+    #             ratio = prob / (_prob_old + 1e-7)
+    #             surr1 = ratio * _adv
+    #             surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * _adv
+    #             actor_loss = -torch.min(surr1, surr2).mean()
 
-        #         # 가치신경망 손실함수 계산
-        #         critic_loss = F.mse_loss(value, _ret).mean()
+    #             # 가치신경망 손실함수 계산
+    #             critic_loss = F.mse_loss(value, _ret).mean()
 
-        #         total_loss = actor_loss + critic_loss
+    #             total_loss = actor_loss + critic_loss
 
-        #         self.optimizer.zero_grad()
-        #         total_loss.backward()
-        #         self.optimizer.step()
+    #             self.optimizer.zero_grad()
+    #             total_loss.backward()
+    #             self.optimizer.step()
 
-        #         actor_losses.append(actor_loss.item())
-        #         critic_losses.append(critic_loss.item())
+    #             actor_losses.append(actor_loss.item())
+    #             critic_losses.append(critic_loss.item())
 
-        # return np.mean(actor_losses), np.mean(critic_losses)
+    #     return np.mean(actor_losses), np.mean(critic_losses)
 
     # 네트워크 모델 저장
     def save_model(self):
@@ -289,9 +227,8 @@ class MAPOCAAgent:
 if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
-    env = UnityEnvironment(file_name=env_name,
-                           side_channels=[engine_configuration_channel],
-                           base_port=7777)
+    env = UnityEnvironment(file_name=None,
+                           side_channels=[engine_configuration_channel])
     env.reset()
 
     # 유니티 behavior 설정 
@@ -344,11 +281,11 @@ if __name__ == '__main__':
             agent.append_sample(_states, _actions, [global_reward], _next_states, [done], _active_agents)
             
             # 학습수행
-            if (step+1) % n_step == 0:
-                # agent.train_model()
-                actor_loss, critic_loss = agent.train_model()
-                actor_losses.append(actor_loss)
-                critic_losses.append(critic_loss)
+            # if (step+1) % n_step == 0:
+            #     agent.train_model()
+            #     actor_loss, critic_loss = agent.train_model()
+            #     actor_losses.append(actor_loss)
+            #     critic_losses.append(critic_loss)
         
         active_agents = next_active_agents
         
