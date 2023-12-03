@@ -21,12 +21,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.collab-proxy": {
-      "version": "1.13.5",
+      "version": "1.7.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.nuget.newtonsoft-json": "2.0.0",
-        "com.unity.services.core": "1.0.1"
+        "com.unity.nuget.newtonsoft-json": "2.0.0"
       },
       "url": "https://packages.unity.com"
     },
@@ -56,7 +55,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.vscode": {
-      "version": "1.2.4",
+      "version": "1.2.3",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -70,15 +69,23 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ml-agents": {
-      "version": "git+https://github.com/Unity-Technologies/ml-agents.git?path=com.unity.ml-agents#release_17",
+      "version": "file:C:/Users/Q/Desktop/ml-agents-release_17/com.unity.ml-agents",
       "depth": 0,
-      "source": "git",
+      "source": "local",
       "dependencies": {
         "com.unity.barracuda": "1.4.0-preview",
         "com.unity.modules.imageconversion": "1.0.0",
         "com.unity.modules.jsonserialize": "1.0.0"
-      },
-      "hash": "1c405c8a23f0274bdb4b7e50a49b882575f06454"
+      }
+    },
+    "com.unity.ml-agents.extensions": {
+      "version": "file:C:/Users/Q/Desktop/ml-agents-release_17/com.unity.ml-agents.extensions",
+      "depth": 0,
+      "source": "local",
+      "dependencies": {
+        "com.unity.ml-agents": "2.0.0-exp.1",
+        "com.unity.modules.physics": "1.0.0"
+      }
     },
     "com.unity.nuget.newtonsoft-json": {
       "version": "2.0.0",
@@ -87,17 +94,8 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
-    "com.unity.services.core": {
-      "version": "1.0.1",
-      "depth": 1,
-      "source": "registry",
-      "dependencies": {
-        "com.unity.modules.unitywebrequest": "1.0.0"
-      },
-      "url": "https://packages.unity.com"
-    },
     "com.unity.test-framework": {
-      "version": "1.1.29",
+      "version": "1.1.27",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -117,7 +115,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.timeline": {
-      "version": "1.5.7",
+      "version": "1.5.6",
       "depth": 0,
       "source": "registry",
       "dependencies": {
