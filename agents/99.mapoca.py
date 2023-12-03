@@ -282,7 +282,7 @@ if __name__ == '__main__':
         
         preprocess = lambda ray, vel: np.concatenate((ray, vel), axis=-1)
         states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
-        actions = agent.get_action(states, active_agents, train_mode)
+        actions = agent.get_action(states, active_agents, train_mode) 
         actions_tuple = ActionTuple()
         actions_tuple.add_discrete(actions)
         env.set_actions(behavior_name, actions_tuple)
@@ -291,9 +291,17 @@ if __name__ == '__main__':
         dec, term = env.get_steps(behavior_name)
         next_states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
         next_active_agents = active_agents.copy()
-        for term_agent_id in term.agent_id:
-            next_active_agents.remove(list(agents_id).index(term_agent_id))
-            term_agents += 1
+        try:
+            for term_agent_id in term.agent_id:
+                next_active_agents.remove(list(agents_id).index(term_agent_id))
+                term_agents += 1
+        except:
+            print("agents_id:", agents_id)
+            print("term.agent_id:", term.agent_id)
+            print("dec.agent_id:", dec.agent_id)
+            print("active_agents:", agents_id)
+            print("done:", done)
+            exit()
             
         done = term_agents == num_agents
         rewards = list(term.group_reward) if done else \
