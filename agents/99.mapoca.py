@@ -17,13 +17,13 @@ RAY_OBS = 0
 VEL_OBS = 1
 
 # attention parameter
-embed_size = 128
+embed_size = 64
 num_heads = 4
 
 load_model = False
 train_mode = True
 
-discount_factor = 0.99
+discount_factor = 0.999
 learning_rate = 1e-4
 n_step = 4096
 batch_size = 512
@@ -271,7 +271,7 @@ if __name__ == '__main__':
     # MAPOCA 클래스를 agent로 정의 
     agent = MAPOCAAgent()
     actors_losses, critic_losses, scores, episode, score = [[] for _ in range(num_agents)], [], [], 0, 0
-    agents_id, active_agents, term_agents = dec.agent_id, list(range(num_agents)), 0
+    agents_id, active_agents = dec.agent_id, list(range(num_agents))
     for step in range(run_step + test_step):
         if step == run_step:
             if train_mode:
@@ -291,11 +291,11 @@ if __name__ == '__main__':
         dec, term = env.get_steps(behavior_name)
         next_states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
         next_active_agents = active_agents.copy()
-        for term_agent_id in term.agent_id:
-            next_active_agents.remove(list(agents_id).index(term_agent_id))
-            term_agents += 1
-            
-        done = term_agents == num_agents
+        for i in active_agents:
+            if agents_id[i] in term.agent_id:
+                next_active_agents.remove(i)
+
+        done = len(next_active_agents) == 0
         rewards = list(term.group_reward) if done else \
                     list(dec.group_reward) + list(term.group_reward)
         global_reward = np.mean(rewards)
@@ -326,7 +326,7 @@ if __name__ == '__main__':
         if done:
             episode +=1
             scores.append(score)
-            agents_id, active_agents, term_agents, score = dec.agent_id, list(range(num_agents)), 0, 0
+            agents_id, active_agents, score = dec.agent_id, list(range(num_agents)), 0
 
             # 게임 진행 상황 출력 및 텐서 보드에 보상과 손실함수 값 기록 
             if episode % print_interval == 0:
