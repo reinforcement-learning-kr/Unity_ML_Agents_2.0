@@ -10,14 +10,14 @@ from mlagents_envs.side_channel.engine_configuration_channel\
                              import EngineConfigurationChannel
 # 파라미터 값 세팅 
 state_size = 651 + 4
-action_size = 5
+action_size = 4
 num_agents = 3
 
 RAY_OBS = 0
 VEL_OBS = 1
 
 # attention parameter
-embed_size = 64
+embed_size = 128
 num_heads = 4
 
 load_model = False
@@ -283,8 +283,9 @@ if __name__ == '__main__':
         preprocess = lambda ray, vel: np.concatenate((ray, vel), axis=-1)
         states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
         actions = agent.get_action(states, active_agents, train_mode)
+        real_action = actions + 1
         actions_tuple = ActionTuple()
-        actions_tuple.add_discrete(actions)
+        actions_tuple.add_discrete(real_action)
         env.set_actions(behavior_name, actions_tuple)
         env.step()
         # 환경으로부터 얻는 정보
