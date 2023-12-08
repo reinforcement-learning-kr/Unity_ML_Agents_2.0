@@ -48,7 +48,7 @@ elif os_name == 'Darwin':
 # 모델 저장 및 불러오기 경로
 date_time = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
 save_path = f"./saved_models/{game}/MAPOCA/{date_time}"
-load_path = f"./saved_models/{game}/MAPOCA/20231126224352"
+load_path = f"./saved_models/{game}/MAPOCA/20231206075731"
 
 # 연산 장치
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -254,7 +254,7 @@ class MAPOCAAgent:
             self.writer.add_scalar(f"model/actor_{i}_loss", actors_loss[i], step)
         self.writer.add_scalar("model/critic_loss", critic_loss, step)
 
-# Main 함수 -> 전체적으로 PPO 알고리즘을 진행 
+# Main 함수 -> 전체적으로 MAPOCA 알고리즘을 진행 
 if __name__ == '__main__':
     # 유니티 환경 경로 설정 (file_name)
     engine_configuration_channel = EngineConfigurationChannel()
