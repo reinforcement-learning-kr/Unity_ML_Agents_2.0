@@ -70,16 +70,20 @@ class Actor(torch.nn.Module):
 class Critic(torch.nn.Module):
     def __init__(self, **kwargs):
         super(Critic, self).__init__(**kwargs)
-        self.g = torch.nn.ModuleList([torch.nn.Linear(state_size, embed_size) for _ in range(num_agents)])
+        self.g = torch.nn.ModuleList([torch.nn.Linear(state_size, embed_size) 
+                                      for _ in range(num_agents)])
         self.v_rsa = torch.nn.TransformerEncoderLayer(
-            d_model=embed_size, nhead=num_heads, batch_first=True, dim_feedforward=embed_size, dropout=0)
+            d_model=embed_size, nhead=num_heads, batch_first=True,
+            dim_feedforward=embed_size, dropout=0)
         self.v_d1 = torch.nn.Linear(num_agents * embed_size, 128)
         self.v_d2 = torch.nn.Linear(128, 128)
         self.v = torch.nn.Linear(128, 1)
         
-        self.f = torch.nn.ModuleList([torch.nn.Linear(state_size + action_size, embed_size) for _ in range(num_agents)])
+        self.f = torch.nn.ModuleList([torch.nn.Linear(state_size + action_size, embed_size) 
+                                      for _ in range(num_agents)])
         self.q_rsa = torch.nn.TransformerEncoderLayer(
-            d_model=2*embed_size, nhead=num_heads, batch_first=True, dim_feedforward=embed_size, dropout=0)
+            d_model=2*embed_size, nhead=num_heads, batch_first=True,
+            dim_feedforward=embed_size, dropout=0)
         self.q_d1 = torch.nn.Linear(num_agents * 2*embed_size, 128)
         self.q_d2 = torch.nn.Linear(128, 128)
         self.q = torch.nn.Linear(128, 1)
@@ -100,7 +104,8 @@ class Critic(torch.nn.Module):
         b = states.shape[0]
         
         states = [s.reshape(b, state_size) for s in torch.split(states, 1, dim=1)]
-        s_embed = [g(s) if i == agent_idx else torch.zeros((b, embed_size)).to(device) for i, (g, s) in enumerate(zip(self.g, states))]
+        s_embed = [g(s) if i == agent_idx else torch.zeros((b, embed_size)).to(device) 
+                   for i, (g, s) in enumerate(zip(self.g, states))]
         
         active_actions = actions != -1
         actions = torch.where(active_actions, actions, 0)
@@ -108,7 +113,8 @@ class Critic(torch.nn.Module):
         onehot_actions *= active_actions
         onehot_actions = torch.split(onehot_actions, 1, dim=1)
         sa_embed = [torch.zeros((b, embed_size)).to(device) if i == agent_idx else \
-                    f(torch.cat((s,a.reshape(b, action_size)), dim=1)) for i, (f, s, a) in enumerate(zip(self.f, states, onehot_actions))]
+                    f(torch.cat((s,a.reshape(b, action_size)), dim=1)) 
+                    for i, (f, s, a) in enumerate(zip(self.f, states, onehot_actions))]
         q_h = self.q_rsa(torch.cat((torch.stack(s_embed, dim=1), torch.stack(sa_embed, dim=1)), dim=2))
         q_h = F.relu(self.q_d1(q_h.reshape(b, -1)))
         q_h = F.relu(self.q_d2(q_h))
