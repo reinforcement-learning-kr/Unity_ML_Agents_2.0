@@ -154,7 +154,7 @@ class MAPOCAAgent:
             actions.append(action)
         return np.array(actions).reshape((len(active_agents), 1))
 
-    # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
+    # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부, 에이전트 활성 여부)
     def append_sample(self, states, actions, reward, next_states, done, actives):
         self.memory.append((states, actions, reward, next_states, done, actives))
 
