@@ -14,7 +14,7 @@ action_size = 4
 num_agents = 3
 
 RAY_OBS = 0
-VEL_OBS = 1
+VEC_OBS = 1
 
 # attention parameter
 embed_size = 128
@@ -287,7 +287,7 @@ if __name__ == '__main__':
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
         preprocess = lambda ray, vel: np.concatenate((ray, vel), axis=-1)
-        states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
+        states = preprocess(dec.obs[RAY_OBS], dec.obs[VEC_OBS])
         actions = agent.get_action(states, active_agents, train_mode)
         real_action = actions + 1
         actions_tuple = ActionTuple()
@@ -296,7 +296,7 @@ if __name__ == '__main__':
         env.step()
         # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
-        next_states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
+        next_states = preprocess(dec.obs[RAY_OBS], dec.obs[VEC_OBS])
         next_active_agents = active_agents.copy()
         for i in active_agents:
             if agents_id[i] in term.agent_id:
