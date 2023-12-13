@@ -175,7 +175,7 @@ class MAPOCAAgent:
         states, actions, reward, next_states, done, actives = map(lambda x: torch.FloatTensor(x).to(device),
                                                         [states, actions, reward, next_states, done, actives])
         
-       # prob_old, adv, ret 계산 
+       # prob_olds, ret 계산 
         with torch.no_grad():
             value = self.critic(states)
             next_value = self.critic(next_states)
