@@ -286,7 +286,7 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        preprocess = lambda ray, vel: np.concatenate((ray, vel), axis=-1)
+        preprocess = lambda ray, vec: np.concatenate((ray, vec), axis=-1)
         states = preprocess(dec.obs[RAY_OBS], dec.obs[VEC_OBS])
         actions = agent.get_action(states, active_agents, train_mode)
         real_action = actions + 1
