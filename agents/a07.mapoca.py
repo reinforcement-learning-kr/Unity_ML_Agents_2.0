@@ -221,7 +221,7 @@ class MAPOCAAgent:
                     
                     surr1 = ratio * adv
                     surr2 = torch.clamp(ratio, min=1-epsilon, max=1+epsilon) * adv
-                    actor_loss = -torch.min(surr1, surr2).mean()
+                    actor_loss = (-torch.min(surr1, surr2) * active).mean()
                     
                     self.actor_optimizers[i].zero_grad()
                     actor_loss.backward(retain_graph=True)
