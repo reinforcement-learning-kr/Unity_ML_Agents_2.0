@@ -14,7 +14,7 @@ action_size = 4
 num_agents = 3
 
 RAY_OBS = 0
-VEL_OBS = 1
+VEC_OBS = 1
 
 # attention parameter
 embed_size = 128
@@ -154,7 +154,7 @@ class MAPOCAAgent:
             actions.append(action)
         return np.array(actions).reshape((len(active_agents), 1))
 
-    # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부)
+    # 리플레이 메모리에 데이터 추가 (상태, 행동, 보상, 다음 상태, 게임 종료 여부, 에이전트 활성 여부)
     def append_sample(self, states, actions, reward, next_states, done, actives):
         self.memory.append((states, actions, reward, next_states, done, actives))
 
@@ -175,7 +175,7 @@ class MAPOCAAgent:
         states, actions, reward, next_states, done, actives = map(lambda x: torch.FloatTensor(x).to(device),
                                                         [states, actions, reward, next_states, done, actives])
         
-       # prob_old, adv, ret 계산 
+       # prob_olds, ret 계산 
         with torch.no_grad():
             value = self.critic(states)
             next_value = self.critic(next_states)
@@ -286,8 +286,8 @@ if __name__ == '__main__':
             train_mode = False
             engine_configuration_channel.set_configuration_parameters(time_scale=1.0)
         
-        preprocess = lambda ray, vel: np.concatenate((ray, vel), axis=-1)
-        states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
+        preprocess = lambda ray, vec: np.concatenate((ray, vec), axis=-1)
+        states = preprocess(dec.obs[RAY_OBS], dec.obs[VEC_OBS])
         actions = agent.get_action(states, active_agents, train_mode)
         real_action = actions + 1
         actions_tuple = ActionTuple()
@@ -296,7 +296,7 @@ if __name__ == '__main__':
         env.step()
         # 환경으로부터 얻는 정보
         dec, term = env.get_steps(behavior_name)
-        next_states = preprocess(dec.obs[RAY_OBS], dec.obs[VEL_OBS])
+        next_states = preprocess(dec.obs[RAY_OBS], dec.obs[VEC_OBS])
         next_active_agents = active_agents.copy()
         for i in active_agents:
             if agents_id[i] in term.agent_id:
