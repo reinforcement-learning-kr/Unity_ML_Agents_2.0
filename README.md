@@ -12,7 +12,7 @@
 아래 "강의 진행 버전"과 "호환성 확인 버전" 중 어떤 설정으로 진행하셔도 강의 내용을 진행하실 수 있습니다. 
 ### 강의 진행 버전
 - Python 3.8
-- Pytorch 1.8
+- Pytorch 2.0
 - Unity 2021.1.18 
 - ML-Agents 2.0 (Unity Package)
 - ML-Agents 0.26.0 (Python Package)
