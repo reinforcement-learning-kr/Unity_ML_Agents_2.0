@@ -25,8 +25,8 @@ train_mode = True
 
 discount_factor = 0.999
 learning_rate = 1e-4
-n_step = 4096
-batch_size = 512
+n_step = 8192
+batch_size = 1024
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
