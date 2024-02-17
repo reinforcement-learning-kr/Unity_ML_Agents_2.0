@@ -1,0 +1,86 @@
+behaviors:
+  My Behavior:
+    trainer_type: ppo
+    hyperparameters:
+      batch_size: 128
+      buffer_size: 12800
+      learning_rate: 0.00025
+      beta: 0.005
+      epsilon: 0.2
+      lambd: 0.95
+      num_epoch: 3
+      learning_rate_schedule: constant
+    network_settings:
+      normalize: true
+      hidden_units: 128
+      num_layers: 2
+      vis_encode_type: simple
+    reward_signals:
+      extrinsic:
+        gamma: 0.99
+        strength: 1.0
+    keep_checkpoints: 5
+    max_steps: 3000000
+    time_horizon: 100
+    summary_freq: 10000
+environment_parameters:
+  ballSpeed:
+    curriculum:
+      - name: Lesson0
+        completion_criteria:
+          measure: progress
+          behavior: My Behavior
+          signal_smoothing: true
+          min_lesson_length: 0
+          threshold: 0.2
+        value: 2.0
+      - name: Lesson1
+        completion_criteria:
+          measure: progress
+          behavior: My Behavior
+          signal_smoothing: true
+          min_lesson_length: 0
+          threshold: 0.4
+        value: 2.5
+      - name: Lesson2
+        value: 3.0
+  boardRadius:
+    curriculum:
+      - name: Lesson0
+        completion_criteria:
+          measure: progress
+          behavior: My Behavior
+          signal_smoothing: true
+          min_lesson_length: 0
+          threshold: 0.2
+        value: 8
+      - name: Lesson1
+        completion_criteria:
+          measure: progress
+          behavior: My Behavior
+          signal_smoothing: true
+          min_lesson_length: 0
+          threshold: 0.4
+        value: 7.5
+      - name: Lesson2
+        value: 7
+  ballNums:
+    curriculum:
+      - name: Lesson0
+        completion_criteria:
+          measure: progress
+          behavior: My Behavior
+          signal_smoothing: true
+          min_lesson_length: 0
+          threshold: 0.2
+        value: 8
+      - name: Lesson1
+        completion_criteria:
+          measure: progress
+          behavior: My Behavior
+          signal_smoothing: true
+          min_lesson_length: 0
+          threshold: 0.4
+        value: 10
+      - name: Lesson2
+        value: 12        
