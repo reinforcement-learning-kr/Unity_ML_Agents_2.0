@@ -175,7 +175,7 @@ if __name__ == '__main__':
                            side_channels=[engine_configuration_channel])
     env.reset()
 
-    # 유니티 브레인 설정 
+    # 유니티 behavior 설정 
     behavior_name_list = list(env.behavior_specs.keys())
     behavior_A = behavior_name_list[0]
     behavior_B = behavior_name_list[1]
