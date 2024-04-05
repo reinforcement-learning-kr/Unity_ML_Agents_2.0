@@ -5,17 +5,17 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>English</string>
     <key>CFBundleExecutable</key>
-    <string>EscapeRoom</string>
+    <string>Maze</string>
     <key>CFBundleGetInfoString</key>
     <string>Unity Player version 2021.1.18f1 (25bdc3efbc2d). (c) 2021 Unity Technologies ApS. All rights reserved.</string>
     <key>CFBundleIconFile</key>
     <string>PlayerIcon.icns</string>
     <key>CFBundleIdentifier</key>
-    <string>com.DefaultCompany.EscapeRoom</string>
+    <string>com.DefaultCompany.Maze</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>EscapeRoom</string>
+    <string>Maze</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
