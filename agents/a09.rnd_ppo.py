@@ -118,7 +118,7 @@ class RNDNetwork(torch.nn.Module):
             x = F.relu(self.d2(x))
         return self.feature(x)
     
-# codes modified from https://github.com/openai/random-network-distillation
+# https://github.com/openai/random-network-distillation의 코드를 변경하여 사용
 class RunningMeanStd(torch.nn.Module):
     def __init__(self, shape, epsilon=1e-4):
         super(RunningMeanStd, self).__init__()
