@@ -112,7 +112,7 @@ public class TwoMissionEnvController : MonoBehaviour
         rightWallTr.localScale = new Vector3(
             FLOOR_WIDTH - holePos - WALL_ENTRANCE_LENGTH * 0.5f,
             WALL_HEIGHT,
-            WALL_THICKNESS);
+            WALL_THICKNESS);        
     }
 
     public Vector3 GetRandomSpawnPos(Bounds bounds, float yPos)

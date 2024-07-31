@@ -11,7 +11,7 @@ from mlagents_envs.side_channel.engine_configuration_channel\
 from mlagents_envs.side_channel.environment_parameters_channel\
                              import EnvironmentParametersChannel
 # 파라미터 값 세팅 
-state_size = 126 # Ray(19 * 6 = 114) & position(3) & rotation(3) & velocity(3) & ball velocity(3)
+state_size = 127 # Ray(19 * 6 = 114) & position(3) & rotation(4) & velocity(3) & ball velocity(3)
 action_size = 4 # Rotate(2) & Move(2)
 goal_size = 2 # goal_signal
 
@@ -30,7 +30,7 @@ n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
 
-run_step = 2500000 if train_mode else 0
+run_step = 1000000 if train_mode else 0
 test_step = 10000
 
 print_interval = 10

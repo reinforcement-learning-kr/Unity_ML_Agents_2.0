@@ -12,6 +12,9 @@ public class TwoMissionAgent : Agent
 
     VectorSensorComponent goalSensor;
 
+    float DecisionWaitingTime = 0.02f;
+    float m_currentTime = 0f;
+    
     public override void Initialize()
     {
         envController.InitializeEnv();
@@ -28,6 +31,8 @@ public class TwoMissionAgent : Agent
 
     public override void CollectObservations(VectorSensor sensor)
     {
+        goalSensor.GetSensor().Reset();
+
         goalSensor.GetSensor().AddObservation(goalsOneHotArr);
         sensor.AddObservation(this.transform.localPosition);
         sensor.AddObservation(this.transform.localRotation);
@@ -112,9 +117,6 @@ public class TwoMissionAgent : Agent
             discreteActionsOut[0] = 3;
         }
     }
-
-    float DecisionWaitingTime = 0.02f;
-    float m_currentTime = 0f;
 
     public void WaitTimeInference(int action)
     {
