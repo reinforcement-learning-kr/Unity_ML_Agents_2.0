@@ -118,7 +118,7 @@ class RNDNetwork(torch.nn.Module):
             x = F.relu(self.d2(x))
         return self.feature(x)
     
-# codes modified from https://github.com/openai/random-network-distillation
+# https://github.com/openai/random-network-distillation의 코드를 변경하여 사용
 class RunningMeanStd(torch.nn.Module):
     def __init__(self, shape, epsilon=1e-4):
         super(RunningMeanStd, self).__init__()
@@ -211,21 +211,21 @@ class RNDPPOAgent:
         state, action, reward, next_state, done = map(lambda x: torch.FloatTensor(x).to(device),
                                                         [state, action, reward, next_state, done])
         
-        # obs_rms update
+        # obs_rms 업데이트
         self.obs_rms.update(state)
         
         # prob_old, adv, ret 계산
         with torch.no_grad():
-            # obs normalize
+            # obs 정규화
             normalized_next_state = self.obs_rms.normalize(next_state)
             target = self.random_network(normalized_next_state)
             pred = self.predictor_network(normalized_next_state)
             reward_i = torch.sum(torch.square(pred - target), dim = 1, keepdim=True)
             
-            # ri_rms update
+            # ri_rms 업데이트
             self.ri_rms.update(reward_i)
             
-            # ri normalize
+            # ri 정규화
             reward_i /= torch.sqrt(self.ri_rms.var) + 1e-7
             
             pi_old, value = self.network(state)
@@ -242,10 +242,10 @@ class RNDPPOAgent:
             adv, adv_i, done = map(lambda x: x.view(n_step, -1).transpose(0,1).contiguous(), [adv, adv_i, done])
             for t in reversed(range(n_step-1)):
                 adv[:, t] += (1 - done[:, t]) * discount_factor * _lambda * adv[:, t+1]
-                # non episodic for internal advantage
+                # adv_i는 에피소드 고려 X
                 adv_i[:, t] += rnd_discount_factor * _lambda * adv_i[:, t+1]
            
-            # adv normalization
+            # adv 정규화
             adv = (adv - adv.mean(dim=1, keepdim=True)) / (adv.std(dim=1, keepdim=True) + 1e-7)
             adv_i = (adv_i - adv_i.mean(dim=1, keepdim=True)) / (adv_i.std(dim=1, keepdim=True) + 1e-7)
             
@@ -254,7 +254,7 @@ class RNDPPOAgent:
             ret = adv + value
             ret_i = adv_i + value_i
             
-            # merge internal and external
+            # adv와 adv_i 통합
             adv = adv + rnd_strength * adv_i
             
         # 학습 이터레이션 시작
