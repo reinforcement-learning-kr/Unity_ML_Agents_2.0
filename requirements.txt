@@ -1,8 +1,6 @@
-mlagents==0.27.0
-mlagents-envs==0.27.0
+mlagents==0.30.0
 tensorboard==2.7.0
-protobuf==3.20
-numpy==1.19
+protobuf==3.19.6
 torch==2.0.0+cu117
 six==1.16.0
 --extra-index https://download.pytorch.org/whl/cu117
