@@ -21,8 +21,8 @@
 - Python 3.8
 - Pytorch 2.1
 - Unity 2022.3.4 
-- ML-Agents 3.0 (Unity Package)
-- ML-Agents 1.0.0 (Python Package)
+- ML-Agents 2.3 (Unity Package)
+- ML-Agents 0.30.0 (Python Package)
 
 ## 사용법 
 ```cmd
