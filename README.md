@@ -15,8 +15,8 @@
 - Python 3.8
 - Pytorch 2.0
 - Unity 2021.1.18 
-- ML-Agents 2.0 (Unity Package)
-- ML-Agents 0.26.0 (Python Package)
+- ML-Agents 2.3 (Unity Package)
+- ML-Agents 0.30.0 (Python Package)
 ### 호환성 확인 버전
 - Python 3.8
 - Pytorch 2.1
