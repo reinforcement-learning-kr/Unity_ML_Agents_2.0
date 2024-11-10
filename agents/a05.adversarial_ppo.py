@@ -17,14 +17,14 @@ load_model = False
 train_mode = True
 
 discount_factor = 0.99
-learning_rate = 3e-4
-n_step = 128
-batch_size = 32
+learning_rate = 5e-4
+n_step = 512
+batch_size = 128
 n_epoch = 3
 _lambda = 0.95
 epsilon = 0.2
 
-run_step = 500000 if train_mode else 0
+run_step = 1000000 if train_mode else 0
 test_step = 50000
 
 print_interval = 10
