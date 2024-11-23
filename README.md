@@ -8,21 +8,17 @@
 
 이 레포는 본 강의에서 제작하는 유니티 ML-Agents([Github](<https://github.com/Unity-Technologies/ml-agents>)) 환경들의 빌드파일과 유니티 프로젝트 파일을 제공합니다. 또한 제공된 환경들에서 에이전트를 학습하기 위한 심층강화학습 알고리즘을 제공합니다. 
 
-## 버전 정보
-강의를 진행할때 사용한 소프트웨어들의 버전이 약간 오래된 버전인 관계로 비교적 최신 소프트웨어들로 호환성을 확인했습니다!<br> 
-아래 "강의 진행 버전"과 "호환성 확인 버전" 중 어떤 설정으로 진행하셔도 강의 내용을 진행하실 수 있습니다. 
-### 강의 진행 버전
-- Python 3.8
-- Pytorch 2.0
-- Unity 2021.1.18 
+## 버전 정보 
+최근 Unity ML-Agents와 numpy 버전 변화에 따라 강의 진행하던 버전과 조금 버전 변경이 발생하였습니다. <br>
+아래와 같은 버전으로 진행 부탁드립니다! 
+- Python 3.9
+- Pytorch 2.0, 2.1
+- Unity 2022.1.18, 2022.3.4 
 - ML-Agents 2.3 (Unity Package)
 - ML-Agents 0.30.0 (Python Package)
-### 호환성 확인 버전
-- Python 3.8
-- Pytorch 2.1
-- Unity 2022.3.4 
-- ML-Agents 2.3 (Unity Package)
-- ML-Agents 0.30.0 (Python Package)
+
+그리고 특정 라이브러리들의 경우 사용해야 하는 버전이 정해져있으므로 설치 이후에 아래 명령어 입력 부탁드립니다! <br>
+- pip install protobuf==3.19.6 numpy==1.23.5 onnx==1.11.0
 
 ## 사용법 
 ```cmd
