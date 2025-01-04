@@ -5,6 +5,7 @@
 - [[인프런] 유니티 머신러닝 에이전트 완전 정복 (기초편)](https://inf.run/d2do)
 - [[위키북스] 파이토치와 유니티 ML-Agents로 배우는 강화학습](https://wikibook.co.kr/pytorch-mlagents/)
 - [[인프런] 유니티 머신러닝 에이전트 완전 정복 (응용편)](https://inf.run/6Rm5G)
+- [[위키북스] 파이토치와 유니티 ML-Agents로 배우는 강화학습 [응용편]](https://wikibook.co.kr/mlagents-app/)
 
 이 레포는 본 강의에서 제작하는 유니티 ML-Agents([Github](<https://github.com/Unity-Technologies/ml-agents>)) 환경들의 빌드파일과 유니티 프로젝트 파일을 제공합니다. 또한 제공된 환경들에서 에이전트를 학습하기 위한 심층강화학습 알고리즘을 제공합니다. 
 
